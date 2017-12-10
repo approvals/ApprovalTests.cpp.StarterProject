@@ -13,6 +13,7 @@ TEST_CASE("ApprovingText")
 
 TEST_CASE("ApprovingWithReporters")
 {
+    // you can alter this to make it launch
     Approvals::verify("Reporters launch only on failure, by default they are the DiffReporter", DiffReporter());
 
 }
@@ -20,7 +21,7 @@ TEST_CASE("ApprovingWithReporters")
 
 TEST_CASE("Approval Is just an assertion library, you don't need to use it.")
 {
-    REQUIRE("No Approvals, only Catch" == "No Approvals, only Catch")
+    REQUIRE("No Approvals, only Catch" == "No Approvals, only Catch");
 }
 
 

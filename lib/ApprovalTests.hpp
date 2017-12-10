@@ -10,201 +10,219 @@
 #include <sys/stat.h>
 #include <stack>
 #include <sstream>
-
-#ifdef APPROVALS_CATCH
-#define CATCH_CONFIG_MAIN
-#endif
-
-#include <Catch.hpp>
-// ******************** From: StringWriter.h
+ // ******************** From: StringWriter.h
 #ifndef STRINGWRITER_H
 #define STRINGWRITER_H
 
 
-class StringWriter {
+class StringWriter
+{
 private:
     std::string s;
     std::string ext;
 
 public:
-    StringWriter(std::string contents, std::string fileExtensionWithDot = ".txt")
-            : s(contents), ext(fileExtensionWithDot) {}
+    StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
+        : s( contents ), ext( fileExtensionWithDot ) {}
 
-    std::string GetFileExtension() {
+    std::string GetFileExtension()
+    {
         return ext;
     }
 
-    void Write(std::string path) {
-        std::ofstream out(path.c_str(), std::ofstream::out);
-        this->Write(out);
+    void Write( std::string path )
+    {
+        std::ofstream out( path.c_str(), std::ofstream::out );
+        this->Write( out );
         out.close();
     }
 
-    void Write(std::ostream &out) {
+    void Write( std::ostream &out )
+    {
         out << s << "\n";
     }
 
 
 };
-
 #endif
 
-// ******************** From: ApprovalException.h
+ // ******************** From: ApprovalException.h
 #ifndef APPROVALEXCEPTION_H
 #define APPROVALEXCEPTION_H
 
 
-class ApprovalException : public std::exception {
+class ApprovalException : public std::exception
+{
 private:
     char *message;
 protected:
-    char *init(const char *msg) {
-        size_t message_sz = std::strlen(msg);
+    char *init( const char *msg )
+    {
+        size_t message_sz = std::strlen( msg );
         char *t = new char[message_sz + 1];
-        std::strncpy(t, msg, message_sz + 1);
+        std::strncpy( t, msg, message_sz + 1 );
         return t;
     };
 public:
-    ApprovalException(const char *msg) : message(init(msg)) {}
+    ApprovalException( const char *msg ) : message( init( msg ) ) {}
 
-    ApprovalException(const ApprovalException &a)
-            : message(init(a.message)) {
+    ApprovalException( const ApprovalException &a )
+        : message( init( a.message ) )
+    {
     }
 
-    virtual ~ApprovalException() throw() {
+    virtual ~ApprovalException() throw()
+    {
         delete[] message;
     }
 
-    virtual const char *what() const throw() {
+    virtual const char *what() const throw()
+    {
         return message;
     }
 };
 
-class ApprovalMismatchException : public ApprovalException {
+class ApprovalMismatchException : public ApprovalException
+{
 private:
-    char *format(const std::string &received, const std::string &approved) {
+    char *format( const std::string &received, const std::string &approved )
+    {
         size_t n = 2048;
         char s[n];
-        int size = snprintf(s,
-                            n,
-                            "Failed Approval: \n"
-                                    "Received does not match approved \n"
-                                    "Received : \"%s\" \n"
-                                    "Approved : \"%s\"",
-                            received.c_str(),
-                            approved.c_str());
+        int size = snprintf( s,
+                             n,
+                             "Failed Approval: \n"
+                                     "Received does not match approved \n"
+                                     "Received : \"%s\" \n"
+                                     "Approved : \"%s\"",
+                             received.c_str(),
+                             approved.c_str() );
         char *t = new char[size + 1];
-        std::strncpy(t, s, size + 1);
+        std::strncpy( t, s, size + 1 );
         return t;
     }
-
 public:
-    ApprovalMismatchException(std::string received, std::string approved)
-            : ApprovalException(format(received, approved)) {
+    ApprovalMismatchException( std::string received, std::string approved )
+        : ApprovalException( format( received, approved ) )
+    {
     }
 
-    ApprovalMismatchException(const ApprovalMismatchException &a)
-            : ApprovalException(a) {}
+    ApprovalMismatchException( const ApprovalMismatchException &a )
+        : ApprovalException( a ) {}
 };
 
-class ApprovalMissingException : public ApprovalException {
+class ApprovalMissingException : public ApprovalException
+{
 private:
-    char *format(const std::string &file) {
+    char *format( const std::string &file )
+    {
         size_t n = 1024;
         char s[n];
-        int size = snprintf(s,
-                            n,
-                            "Failed Approval: \n"
-                                    "Approval File Not Found \n"
-                                    "File: \"%s\"",
-                            file.c_str());
+        int size = snprintf( s,
+                             n,
+                             "Failed Approval: \n"
+                                     "Approval File Not Found \n"
+                                     "File: \"%s\"",
+                             file.c_str() );
         char *t = new char[size + 1];
-        std::strncpy(t, s, size + 1);
+        std::strncpy( t, s, size + 1 );
         return t;
     }
-
 public:
-    ApprovalMissingException(std::string received, std::string approved)
-            : ApprovalException(format(approved)) {
+    ApprovalMissingException( std::string received, std::string approved )
+        : ApprovalException( format( approved ) )
+    {
     }
 
-    ApprovalMissingException(const ApprovalMissingException &a)
-            : ApprovalException(a) {
+    ApprovalMissingException( const ApprovalMissingException &a )
+        : ApprovalException( a )
+    {
     }
 };
 
 #endif
 
-// ******************** From: CommandLauncher.h
+ // ******************** From: CommandLauncher.h
 #ifndef COMMANDLAUNCHER_H
 #define COMMANDLAUNCHER_H
 
 
-class CommandLauncher {
+class CommandLauncher
+{
 public:
     virtual ~CommandLauncher() {}
-
-    virtual bool Launch(std::vector<std::string> argv) = 0;
+    virtual bool Launch( std::vector<std::string> argv ) = 0;
 };
 
-class DoNothingLauncher : public CommandLauncher {
+class DoNothingLauncher : public CommandLauncher
+{
 private:
     std::string cmd;
 public:
     bool working = true;
-
-    bool Launch(std::vector<std::string> argv) {
-        for (std::vector<std::string>::iterator it = argv.begin();
-             it != argv.end();
-             ++it) {
+    bool Launch( std::vector<std::string> argv )
+    {
+        for ( std::vector<std::string>::iterator it = argv.begin();
+                it != argv.end();
+                ++it )
+        {
             cmd += *it;
             cmd += " ";
         }
         return working;
     }
 
-    std::string ReceivedCommand() {
+    std::string ReceivedCommand()
+    {
         return cmd;
     }
 };
 
-class SystemLauncher : public CommandLauncher {
+class SystemLauncher : public CommandLauncher
+{
 public:
-    bool exists(const std::string &command) {
+    bool exists(const std::string& command)
+    {
         std::string which = "which " + command + " > /dev/null 2>&1";
         int result = system(which.c_str());
         return (result == 0);
     }
 
-    bool Launch(std::vector<std::string> argv) {
-        if (!exists(argv.front())) {
+    bool Launch( std::vector<std::string> argv )
+    {
+        if (! exists(argv.front()))
+        {
             return false;
         }
 
         char *ARGV[argv.size() + 1];
         int count = 0;
 
-        for (std::vector<std::string>::iterator it = argv.begin();
-             it != argv.end();
-             ++it) {
-            char *cstr = new char[it->length() + 1];
-            std::strcpy(cstr, it->c_str());
+        for ( std::vector<std::string>::iterator it = argv.begin();
+                it != argv.end();
+                ++it )
+        {
+            char *cstr = new char [it->length() + 1];
+            std::strcpy( cstr, it->c_str() );
             ARGV[count] = cstr;
             count++;
         }
 
         ARGV[argv.size()] = NULL;
 
-        if (fork() == 0) {
-            int i = execvp(ARGV[0], ARGV);
+        if ( fork() == 0 )
+        {
+            int i = execvp( ARGV[0], ARGV );
 
-            if (i < 0) {
+            if ( i < 0 )
+            {
                 std::cout << ARGV[0] << ": command not found" << std::endl;
-                exit(1);
+                exit( 1 );
             }
         }
 
-        for (unsigned int i = 0; i < argv.size(); ++i) {
+        for ( unsigned int i = 0; i < argv.size(); ++i )
+        {
             delete ARGV[i];
         }
 
@@ -214,7 +232,7 @@ public:
 
 #endif
 
-// ******************** From: Macros.h
+ // ******************** From: Macros.h
 #ifndef CATCHPLAYGROUND_MARCOS_H
 #define CATCHPLAYGROUND_MARCOS_H
 
@@ -234,9 +252,9 @@ return *staticValue; \
 
 
 
-#endif
+#endif 
 
-// ******************** From: FileUtils.h
+ // ******************** From: FileUtils.h
 
 
 
@@ -270,9 +288,9 @@ public:
     }
 };
 
-#endif
+#endif 
 
-// ******************** From: ApprovalNamer.h
+ // ******************** From: ApprovalNamer.h
 #ifndef APPROVALNAMER_H
 #define APPROVALNAMER_H
 
@@ -340,7 +358,7 @@ public:
 
 #endif
 
-// ******************** From: Reporter.h
+ // ******************** From: Reporter.h
 #ifndef REPORTER_H
 #define REPORTER_H
 
@@ -376,9 +394,8 @@ private:
     SystemLauncher launcher;
 
 public:
-    GenericDiffReporter(const std::string &program) : CommandReporter(program, &launcher) {};
+    GenericDiffReporter(const std::string& program) : CommandReporter(program, &launcher) {};
 };
-
 class MeldReporter : public GenericDiffReporter {
 public:
     MeldReporter() : GenericDiffReporter("meld") {};
@@ -412,6 +429,7 @@ public:
     }
 
 
+
     template<typename ReporterType>
     static ReporterType &UseReporter() {
         delete &getCurrentReporter();
@@ -422,7 +440,7 @@ public:
 
 #endif
 
-// ******************** From: FileApprover.h
+ // ******************** From: FileApprover.h
 #ifndef FILEAPPROVER_H
 #define FILEAPPROVER_H
 
@@ -470,7 +488,7 @@ public:
     }
 
 
-    static void verify(ApprovalNamer n, StringWriter s, const Reporter &r) {
+    static void verify(ApprovalNamer n, StringWriter s, const Reporter& r) {
         std::string approvedPath = n.getApprovedFile(s.GetFileExtension());
         std::string receivedPath = n.getReceivedFile(s.GetFileExtension());
         s.Write(receivedPath);
@@ -492,21 +510,26 @@ public:
 
 #endif
 
-// ******************** From: FirstWorkingReporter.h
+ // ******************** From: FirstWorkingReporter.h
 #ifndef CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
 #define CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
 
 
-class FirstWorkingReporter : public Reporter {
+class FirstWorkingReporter : public Reporter
+{
 private:
-    std::vector<Reporter *> reporters;
+    std::vector<Reporter*> reporters;
 public:
-    FirstWorkingReporter(std::vector<Reporter *> theReporters) : reporters(theReporters) {
+    FirstWorkingReporter(std::vector<Reporter*> theReporters) : reporters(theReporters)
+    {
     }
 
-    bool Report(std::string received, std::string approved) const override {
-        for (auto r : reporters) {
-            if (r->Report(received, approved)) {
+    bool Report(std::string received, std::string approved) const override
+    {
+        for(auto r : reporters)
+        {
+            if (r->Report(received, approved))
+            {
                 return true;
             }
         }
@@ -514,54 +537,62 @@ public:
     }
 };
 
-#endif
+#endif 
 
-// ******************** From: DiffReporter.h
+ // ******************** From: DiffReporter.h
 #ifndef CATCHPLAYGROUND_DIFFREPORTER_H
 #define CATCHPLAYGROUND_DIFFREPORTER_H
 
 
-class MacDiffReporter : public FirstWorkingReporter {
+class MacDiffReporter : public FirstWorkingReporter
+{
 public:
-    MacDiffReporter() : FirstWorkingReporter({new DiffMergeReporter()}) {
+    MacDiffReporter() : FirstWorkingReporter({new DiffMergeReporter()})
+    {
     }
 };
 
-class LinuxDiffReporter : public FirstWorkingReporter {
+class LinuxDiffReporter : public FirstWorkingReporter
+{
 public:
-    LinuxDiffReporter() : FirstWorkingReporter({new MeldReporter()}) {
+    LinuxDiffReporter() : FirstWorkingReporter({new MeldReporter()})
+    {
     }
 };
 
-class WindowsDiffReporter : public FirstWorkingReporter {
+class WindowsDiffReporter : public FirstWorkingReporter
+{
 public:
-    WindowsDiffReporter() : FirstWorkingReporter({}) {
+    WindowsDiffReporter() : FirstWorkingReporter({})
+    {
     }
 };
 
-class DiffReporter : public FirstWorkingReporter {
+class DiffReporter : public FirstWorkingReporter
+{
 public:
-    DiffReporter() : FirstWorkingReporter({new MacDiffReporter(), new LinuxDiffReporter(), new WindowsDiffReporter()}) {
+    DiffReporter() : FirstWorkingReporter({new MacDiffReporter(), new LinuxDiffReporter(), new WindowsDiffReporter()})
+    {
     }
 
 };
 
-#endif
+#endif 
 
-// ******************** From: Approvals.h
+ // ******************** From: Approvals.h
 #ifndef APPROVALS_H
 #define APPROVALS_H
 
 
-class Approvals {
+class Approvals
+{
 private:
     Approvals() {}
-
     ~Approvals() {}
-
 public:
-    static void verify(std::string contents, const Reporter &reporter = DiffReporter()) {
-        StringWriter writer(contents);
+    static void verify( std::string contents,const Reporter& reporter = DiffReporter() )
+    {
+        StringWriter writer( contents );
         ApprovalNamer namer;
         FileApprover::verify(namer, writer, reporter);
     }
@@ -569,7 +600,7 @@ public:
 
 #endif
 
-// ******************** From: ApprovalTests.h
+ // ******************** From: ApprovalTests.h
 
 
 
@@ -578,23 +609,31 @@ public:
 #define CATCHPLAYGROUND_APPROVALTESTS_H_H
 
 
-#endif
+#endif 
 
-// ******************** From: Catch2Approvals.h
+ // ******************** From: Catch2Approvals.h
+
 #ifndef CATCHPLAYGROUND_CATCH2APPROVALS_H_H
 #define CATCHPLAYGROUND_CATCH2APPROVALS_H_H
 
+// <SingleHpp unalterable>
+#ifdef APPROVALS_CATCH
+#define CATCH_CONFIG_MAIN
+#endif
+
+#include <Catch.hpp>
+// </SingleHpp>
 
 using std::string;
 
 #ifdef APPROVALS_CATCH
 
 struct Catch2ApprovalListener : Catch::TestEventListenerBase {
-    using TestEventListenerBase::TestEventListenerBase;
+    using TestEventListenerBase::TestEventListenerBase; 
     TestName currentTest;
 
     virtual void testCaseStarting(Catch::TestCaseInfo const &testInfo) override {
-
+        
         currentTest.fileName = testInfo.lineInfo.file;
         currentTest.testCase = testInfo.name;
         ApprovalNamer::currentTest(&currentTest);

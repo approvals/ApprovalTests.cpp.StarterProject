@@ -1,0 +1,1 @@
+Reporters launch only on failure, by default they are the DiffReporter
