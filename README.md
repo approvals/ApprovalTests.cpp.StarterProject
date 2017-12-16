@@ -1,4 +1,4 @@
-# ApprovalTests.Cpp.StarterProject
+# ApprovalTests.cpp.StarterProject
 
 This is a starter project for:
  * Catch2
