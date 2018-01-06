@@ -3,7 +3,7 @@
 /**
  * In clion, you can run this with ctrl+r
  * You might need to add a Catch Runtime to see it in the unit test window
- * Run > edit confirugations > + > Catch > Target=Playground_Tests
+ * Run > edit configurations > + > Catch > Target=Playground_Tests
  */
 TEST_CASE("ApprovingText")
 {
@@ -21,7 +21,7 @@ TEST_CASE("ApprovingWithReporters")
 
 TEST_CASE("Approval Is just an assertion library, you don't need to use it.")
 {
-    REQUIRE("No Approvals, only Catch" == "No Approvals, only Catch");
+    REQUIRE(std::string("No Approvals, only Catch") == "No Approvals, only Catch");
 }
 
 
