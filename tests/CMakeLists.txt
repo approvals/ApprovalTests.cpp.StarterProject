@@ -5,3 +5,4 @@ set(SOURCE_FILES
         main.cpp
         NewTest.cpp)
 add_executable(PlaygroundTests ${SOURCE_FILES} )
+add_test(NAME PlaygroundTests COMMAND PlaygroundTests)
