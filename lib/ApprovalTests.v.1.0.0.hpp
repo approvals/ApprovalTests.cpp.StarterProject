@@ -1,104 +1,36 @@
-#include <exception>
 #include <string>
-#include <stdio.h>
-#include <sstream>
 #include <fstream>
 #include <stack>
+#include <sstream>
 #include <vector>
 #include <sys/stat.h>
-#include <memory>
-#include <cstring>
+#include <exception>
 #include <iostream>
 #include <stdlib.h>
 #include <numeric>
+#include <memory>
 #include <functional>
 #include <ostream>
- // ******************** From: ApprovalException.h
-#ifndef APPROVALEXCEPTION_H
-#define APPROVALEXCEPTION_H
+ // ******************** From: Reporter.h
+#ifndef REPORTER_H
+#define REPORTER_H
 
-
-class ApprovalException : public std::exception
-{
-private:
-    std::string message;
+class Reporter {
 public:
-    ApprovalException( const std::string& msg ) : message( msg ) {}
-
-    virtual const char *what() const throw()
-    {
-        return message.c_str();
-    }
-};
-
-class ApprovalMismatchException : public ApprovalException
-{
-private:
-    std::string format( const std::string &received, const std::string &approved )
-    {
-        std::stringstream s;
-        s << "Failed Approval: \n"
-          << "Received does not match approved \n"
-          << "Received : \"" << received << "\" \n"
-          << "Approved : \"" << approved << "\"";
-        return s.str();
-    }
-public:
-    ApprovalMismatchException( std::string received, std::string approved )
-        : ApprovalException( format( received, approved ) )
-    {
-    }
-};
-
-class ApprovalMissingException : public ApprovalException
-{
-private:
-    std::string format( const std::string &file )
-    {
-        std::stringstream s;
-        s << "Failed Approval: \n"
-          << "Approval File Not Found \n"
-          << "File: \"" << file << '"';
-        return s.str();
-    }
-public:
-    ApprovalMissingException( std::string received, std::string approved )
-        : ApprovalException( format( approved ) )
-    {
-    }
+    virtual bool Report(std::string received, std::string approved) const = 0;
 };
 
 #endif
-
- // ******************** From: Macros.h
-#ifndef CATCHPLAYGROUND_MARCOS_H
-#define CATCHPLAYGROUND_MARCOS_H
-
-
-#define STATIC(type, name, defaultValue) \
-      static type &name(type *value = NULL) { \
-static type *staticValue; \
-if (value != NULL) { \
-staticValue = value; \
-} \
-if (staticValue == NULL) \
-{ \
- staticValue = defaultValue; \
-} \
-return *staticValue; \
-} \
-
-
-
-#endif 
 
  // ******************** From: SystemUtils.h
 #ifndef SYSTEMUTILS_H
 #define SYSTEMUTILS_H
 // <SingleHpp unalterable>
 #ifdef _WIN32
+// ReSharper disable once CppUnusedIncludeDirective
 #include <io.h>
 #else
+// ReSharper disable once CppUnusedIncludeDirective
 #include <unistd.h>
 #endif
 // </SingleHpp>
@@ -125,6 +57,28 @@ public:
 
 };
 #endif
+
+ // ******************** From: Macros.h
+#ifndef CATCHPLAYGROUND_MARCOS_H
+#define CATCHPLAYGROUND_MARCOS_H
+
+
+#define STATIC(type, name, defaultValue) \
+      static type &name(type *value = NULL) { \
+static type *staticValue; \
+if (value != NULL) { \
+staticValue = value; \
+} \
+if (staticValue == NULL) \
+{ \
+ staticValue = defaultValue; \
+} \
+return *staticValue; \
+} \
+
+
+
+#endif 
 
  // ******************** From: StringWriter.h
 #ifndef STRINGWRITER_H
@@ -172,7 +126,6 @@ using std::string;
 class TestName {
 public:
     string fileName;
-    string testCase;
     std::vector<string> sections;
 };
 
@@ -185,12 +138,11 @@ public:
     string getTestName() {
         std::stringstream ext;
         auto test = currentTest();
-        for (int i = 0; i < test.sections.size(); i++) {
+        for (size_t i = 0; i < test.sections.size(); i++) {
             if (0 < i) {
                 ext << ".";
             }
             ext << test.sections[i];
-
         }
 
         return ext.str();
@@ -267,13 +219,59 @@ public:
 
 #endif 
 
- // ******************** From: Reporter.h
-#ifndef REPORTER_H
-#define REPORTER_H
+ // ******************** From: ApprovalException.h
+#ifndef APPROVALEXCEPTION_H
+#define APPROVALEXCEPTION_H
 
-class Reporter {
+
+class ApprovalException : public std::exception
+{
+private:
+    std::string message;
 public:
-    virtual bool Report(std::string received, std::string approved) const = 0;
+    ApprovalException( const std::string& msg ) : message( msg ) {}
+
+    virtual const char *what() const throw()
+    {
+        return message.c_str();
+    }
+};
+
+class ApprovalMismatchException : public ApprovalException
+{
+private:
+    std::string format( const std::string &received, const std::string &approved )
+    {
+        std::stringstream s;
+        s << "Failed Approval: \n"
+          << "Received does not match approved \n"
+          << "Received : \"" << received << "\" \n"
+          << "Approved : \"" << approved << "\"";
+        return s.str();
+    }
+public:
+    ApprovalMismatchException( std::string received, std::string approved )
+        : ApprovalException( format( received, approved ) )
+    {
+    }
+};
+
+class ApprovalMissingException : public ApprovalException
+{
+private:
+    std::string format( const std::string &file )
+    {
+        std::stringstream s;
+        s << "Failed Approval: \n"
+          << "Approval File Not Found \n"
+          << "File: \"" << file << '"';
+        return s.str();
+    }
+public:
+    ApprovalMissingException( std::string received, std::string approved )
+        : ApprovalException( format( approved ) )
+    {
+    }
 };
 
 #endif
@@ -347,40 +345,6 @@ public:
 
 #endif
 
- // ******************** From: FirstWorkingReporter.h
-#ifndef CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
-#define CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
-
-
-class FirstWorkingReporter : public Reporter
-{
-private:
-    std::vector< std::unique_ptr<Reporter> > reporters;
-public:
-    
-    FirstWorkingReporter(std::vector<Reporter*> theReporters)
-    {
-        for(auto r : theReporters)
-        {
-            reporters.push_back(std::unique_ptr<Reporter>(r));
-        }
-    }
-
-    bool Report(std::string received, std::string approved) const override
-    {
-        for(auto& r : reporters)
-        {
-            if (r->Report(received, approved))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-};
-
-#endif 
-
  // ******************** From: CommandLauncher.h
 #ifndef COMMANDLAUNCHER_H
 #define COMMANDLAUNCHER_H
@@ -447,6 +411,40 @@ public:
 };
 
 #endif  
+
+ // ******************** From: FirstWorkingReporter.h
+#ifndef CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
+#define CATCHPLAYGROUND_FIRSTWORKINGREPORTER_H
+
+
+class FirstWorkingReporter : public Reporter
+{
+private:
+    std::vector< std::unique_ptr<Reporter> > reporters;
+public:
+    
+    FirstWorkingReporter(std::vector<Reporter*> theReporters)
+    {
+        for(auto r : theReporters)
+        {
+            reporters.push_back(std::unique_ptr<Reporter>(r));
+        }
+    }
+
+    bool Report(std::string received, std::string approved) const override
+    {
+        for(auto& r : reporters)
+        {
+            if (r->Report(received, approved))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+#endif 
 
  // ******************** From: CommandReporter.h
 
@@ -610,8 +608,6 @@ namespace DiffPrograms {
 
 #ifndef APPROVALTESTS_CPP_GENERICDIFFREPORTER_H
 #define APPROVALTESTS_CPP_GENERICDIFFREPORTER_H
-
-
 
 
 class GenericDiffReporter : public CommandReporter {
@@ -891,65 +887,6 @@ public:
 };
 
 #endif
-
- // ******************** From: ApprovalTests.h
-
-
-
-
-#ifndef CATCHPLAYGROUND_APPROVALTESTS_H_H
-#define CATCHPLAYGROUND_APPROVALTESTS_H_H
-
-
-#endif 
-
- // ******************** From: Catch2Approvals.h
-
-#ifndef CATCHPLAYGROUND_CATCH2APPROVALS_H_H
-#define CATCHPLAYGROUND_CATCH2APPROVALS_H_H
-
-// <SingleHpp unalterable>
-#ifdef APPROVALS_CATCH
-#define CATCH_CONFIG_MAIN
-#endif
-
-#include "Catch.hpp"
-// </SingleHpp>
-
-using std::string;
-
-#ifdef APPROVALS_CATCH
-
-struct Catch2ApprovalListener : Catch::TestEventListenerBase {
-    using TestEventListenerBase::TestEventListenerBase; 
-    TestName currentTest;
-
-    virtual void testCaseStarting(Catch::TestCaseInfo const &testInfo) override {
-        
-        currentTest.fileName = testInfo.lineInfo.file;
-        currentTest.testCase = testInfo.name;
-        ApprovalNamer::currentTest(&currentTest);
-    }
-
-    virtual void testCaseEnded(Catch::TestCaseStats const &testCaseStats) override {
-        while (!currentTest.sections.empty()) {
-            currentTest.sections.pop_back();
-        }
-    }
-
-    virtual void sectionStarting(Catch::SectionInfo const &sectionInfo) override {
-        currentTest.sections.push_back(sectionInfo.name);
-    }
-
-    virtual void sectionEnded(Catch::SectionStats const &sectionStats) override {
-        currentTest.sections.pop_back();
-    }
-};
-
-CATCH_REGISTER_LISTENER(Catch2ApprovalListener)
-
-#endif
-#endif 
 
  // ******************** From: CombinationApprovals.h
 #ifndef COMBINATIONAPPROVALS_H
@@ -1375,4 +1312,88 @@ public:
 };
 
 #endif
+
+ // ******************** From: Catch2Approvals.h
+
+#ifndef CATCHPLAYGROUND_CATCH2APPROVALS_H_H
+#define CATCHPLAYGROUND_CATCH2APPROVALS_H_H
+
+// <SingleHpp unalterable>
+#ifdef APPROVALS_CATCH
+#define CATCH_CONFIG_MAIN
+#include "Catch.hpp"
+struct Catch2ApprovalListener : Catch::TestEventListenerBase {
+    using TestEventListenerBase::TestEventListenerBase;
+    TestName currentTest;
+
+    virtual void testCaseStarting(Catch::TestCaseInfo const &testInfo) override {
+
+        currentTest.fileName = testInfo.lineInfo.file;
+        ApprovalNamer::currentTest(&currentTest);
+    }
+
+    virtual void testCaseEnded(Catch::TestCaseStats const &testCaseStats) override {
+        while (!currentTest.sections.empty()) {
+            currentTest.sections.pop_back();
+        }
+    }
+
+    virtual void sectionStarting(Catch::SectionInfo const &sectionInfo) override {
+        currentTest.sections.push_back(sectionInfo.name);
+    }
+
+    virtual void sectionEnded(Catch::SectionStats const &sectionStats) override {
+        currentTest.sections.pop_back();
+    }
+};
+
+CATCH_REGISTER_LISTENER(Catch2ApprovalListener)
+
+#endif
+// </SingleHpp>
+#endif 
+
+ // ******************** From: ApprovalTests.h
+
+
+
+
+#ifndef CATCHPLAYGROUND_APPROVALTESTS_H_H
+#define CATCHPLAYGROUND_APPROVALTESTS_H_H
+
+
+#endif 
+
+ // ******************** From: OkraApprovals.h
+#ifndef APPROVALTESTS_CPP_OKRAAPPPROVALS_H
+#define APPROVALTESTS_CPP_OKRAAPPPROVALS_H
+
+#ifdef APPROVALS_OKRA
+
+// <SingleHpp unalterable>
+#include "Okra.h"
+
+
+struct OkraApprovalListener : public okra::IListener
+{
+ TestName currentTest;
+
+public:
+ void OnStart(const okra::TestInfo &testInfo) override
+ {
+  currentTest.fileName = testInfo.file_path;
+  currentTest.sections = {testInfo.name};
+  ApprovalNamer::currentTest(&currentTest);
+ }
+
+ void OnEnd(const okra::TestInfo &testInfo, std::chrono::high_resolution_clock::duration duration) override {
+ }
+ void OnFail(const std::string &message) override {
+ }
+};
+
+OKRA_REGISTER_LISTENER(OkraApprovalListener);
+// </SingleHpp>
+#endif
+#endif 
 

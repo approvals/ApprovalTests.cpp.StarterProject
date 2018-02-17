@@ -1,5 +1,5 @@
 #include "ApprovalTests.hpp"
-
+#include "Catch.hpp"
 /**
  * In clion, you can run this with ctrl+r
  * You might need to add a Catch Runtime to see it in the unit test window
