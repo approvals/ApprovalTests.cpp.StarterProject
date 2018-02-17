@@ -2,7 +2,8 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true" buildAllGenerated="true">
     <generated>
-      <config projectName="CatchPlayground" targetName="PlaygroundTests" />
+      <config projectName="ApprovalTests.cpp.StarterProject" targetName="StarterProject.tests" />
+      <config projectName="ApprovalTests.cpp.StarterProject" targetName="StarterProject.code" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -12,9 +13,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8eb32e4b-de28-4f66-88f9-ff8a775f9090" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.name" afterPath="$PROJECT_DIR$/.idea/.name" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/lib/ApprovalTests.hpp" afterPath="$PROJECT_DIR$/lib/ApprovalTests.hpp" />
-      <change beforePath="$PROJECT_DIR$/lib/ApprovalTests.v.0.2.0.hpp" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" afterPath="$PROJECT_DIR$/CMakeLists.txt" />
+      <change beforePath="$PROJECT_DIR$/code/CMakeLists.txt" afterPath="$PROJECT_DIR$/code/CMakeLists.txt" />
+      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,7 +43,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ApprovalTests.hpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ApprovalTests.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.hpp">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
@@ -53,8 +56,8 @@
       <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="19" lean-forward="false" selection-start-line="5" selection-start-column="19" selection-end-line="5" selection-end-column="19" />
+            <state relative-caret-position="105">
+              <caret line="7" column="63" lean-forward="false" selection-start-line="7" selection-start-column="63" selection-end-line="7" selection-end-column="63" />
               <folding />
             </state>
           </provider>
@@ -70,11 +73,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="165">
-              <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+              <caret line="11" column="0" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/code/CMakeLists.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="45">
+              <caret line="3" column="31" lean-forward="false" selection-start-line="3" selection-start-column="31" selection-end-line="3" selection-end-column="31" />
               <folding />
             </state>
           </provider>
@@ -118,7 +131,6 @@
         <option value="$PROJECT_DIR$/ApprovalTests/Bowling.h" />
         <option value="$PROJECT_DIR$/ApprovalTests/namers/IglooNamerFactory.h" />
         <option value="$PROJECT_DIR$/ApprovalTests/Catch2Approvals.h.h" />
-        <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/ApprovalTests/namers/Catch2NamerFactory.h" />
         <option value="$PROJECT_DIR$/ApprovalTests_Catch2_Tests/main.cpp" />
         <option value="$PROJECT_DIR$/ApprovalTests/Math.h" />
@@ -142,7 +154,6 @@
         <option value="$PROJECT_DIR$/ApprovalTests/reporters/Reporter.h" />
         <option value="$PROJECT_DIR$/to_do.txt" />
         <option value="$PROJECT_DIR$/ApprovalTests/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/tests/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/tests/Test.cpp" />
         <option value="$PROJECT_DIR$/tests/BattleShipGame.h" />
         <option value="$PROJECT_DIR$/tests/Ship.h" />
@@ -153,9 +164,11 @@
         <option value="$PROJECT_DIR$/code/BattleShipGame.h" />
         <option value="$PROJECT_DIR$/code/fizzbuzz.h" />
         <option value="$PROJECT_DIR$/tests/main.cpp" />
-        <option value="$PROJECT_DIR$/code/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/tests/NewTest.cpp" />
         <option value="$PROJECT_DIR$/lib/ApprovalTests.hpp" />
+        <option value="$PROJECT_DIR$/code/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/tests/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/CMakeLists.txt" />
       </list>
     </option>
   </component>
@@ -166,10 +179,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
-  <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
+  <component name="ProjectFrameBounds">
     <option name="y" value="23" />
-    <option name="width" value="1280" />
-    <option name="height" value="800" />
+    <option name="width" value="2048" />
+    <option name="height" value="1207" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="1" id="Add" />
@@ -193,21 +206,21 @@
         <subPane>
           <expand>
             <path>
-              <item name="CatchPlayground" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
+              <item name="ApprovalTests.cpp.StarterProject" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
               <item name="ApprovalTests.Cpp.StarterProject" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="CatchPlayground" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
+              <item name="ApprovalTests.cpp.StarterProject" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
               <item name="ApprovalTests.Cpp.StarterProject" type="462c0819:PsiDirectoryNode" />
               <item name="code" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="CatchPlayground" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
+              <item name="ApprovalTests.cpp.StarterProject" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
               <item name="ApprovalTests.Cpp.StarterProject" type="462c0819:PsiDirectoryNode" />
               <item name="lib" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="CatchPlayground" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
+              <item name="ApprovalTests.cpp.StarterProject" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
               <item name="ApprovalTests.Cpp.StarterProject" type="462c0819:PsiDirectoryNode" />
               <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
@@ -249,40 +262,44 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Catch.ApprovingText">
-    <configuration name="All in ApprovalTests.hpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#ApprovalTests]" TEST_MODE="PATTERN">
+  <component name="RunManager" selected="Application.StarterProject.tests">
+    <configuration name="All in ApprovalTests.hpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#ApprovalTests]" TEST_MODE="PATTERN">
       <envs />
     </configuration>
-    <configuration name="All in NewTest.cpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#NewTest]" TEST_MODE="PATTERN">
+    <configuration name="All in NewTest.cpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#NewTest]" TEST_MODE="PATTERN">
       <envs />
     </configuration>
-    <configuration name="All in main.cpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#main]" TEST_MODE="PATTERN">
+    <configuration name="All in main.cpp" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_PATTERN="[#main]" TEST_MODE="PATTERN">
       <envs />
     </configuration>
-    <configuration name="ApprovingText" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_METHOD="ApprovingText" TEST_MODE="SUITE_TEST">
+    <configuration name="ApprovingText" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_METHOD="ApprovingText" TEST_MODE="SUITE_TEST">
       <envs />
     </configuration>
-    <configuration name="ApprovingWithReporters" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_METHOD="ApprovingWithReporters" TEST_MODE="SUITE_TEST">
+    <configuration name="ApprovingWithReporters" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" temporary="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_METHOD="ApprovingWithReporters" TEST_MODE="SUITE_TEST">
       <envs />
     </configuration>
-    <configuration name="Catch_Tests" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests" TEST_MODE="SUITE_TEST">
+    <configuration name="Catch_Tests" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="PlaygroundTests" TEST_MODE="SUITE_TEST">
       <envs />
     </configuration>
-    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="CatchPlayground" EXPLICIT_BUILD_TARGET_NAME="all">
+    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="CatchPlayground" EXPLICIT_BUILD_TARGET_NAME="all">
       <envs />
     </configuration>
-    <configuration name="PlaygroundTests" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CatchPlayground" TARGET_NAME="PlaygroundTests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="CatchPlayground" RUN_TARGET_NAME="PlaygroundTests">
+    <configuration name="StarterProject.code" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="StarterProject.code" CONFIG_NAME="Debug">
       <envs />
     </configuration>
-    <list size="8">
-      <item index="0" class="java.lang.String" itemvalue="Application.PlaygroundTests" />
-      <item index="1" class="java.lang.String" itemvalue="Application.Build All" />
-      <item index="2" class="java.lang.String" itemvalue="Catch.Catch_Tests" />
-      <item index="3" class="java.lang.String" itemvalue="Catch.All in NewTest.cpp" />
-      <item index="4" class="java.lang.String" itemvalue="Catch.ApprovingWithReporters" />
-      <item index="5" class="java.lang.String" itemvalue="Catch.All in ApprovalTests.hpp" />
-      <item index="6" class="java.lang.String" itemvalue="Catch.All in main.cpp" />
-      <item index="7" class="java.lang.String" itemvalue="Catch.ApprovingText" />
+    <configuration name="StarterProject.tests" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="ApprovalTests.cpp.StarterProject" TARGET_NAME="StarterProject.tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="ApprovalTests.cpp.StarterProject" RUN_TARGET_NAME="StarterProject.tests">
+      <envs />
+    </configuration>
+    <list size="9">
+      <item index="0" class="java.lang.String" itemvalue="Application.Build All" />
+      <item index="1" class="java.lang.String" itemvalue="Catch.Catch_Tests" />
+      <item index="2" class="java.lang.String" itemvalue="Application.StarterProject.code" />
+      <item index="3" class="java.lang.String" itemvalue="Application.StarterProject.tests" />
+      <item index="4" class="java.lang.String" itemvalue="Catch.All in NewTest.cpp" />
+      <item index="5" class="java.lang.String" itemvalue="Catch.ApprovingWithReporters" />
+      <item index="6" class="java.lang.String" itemvalue="Catch.All in ApprovalTests.hpp" />
+      <item index="7" class="java.lang.String" itemvalue="Catch.All in main.cpp" />
+      <item index="8" class="java.lang.String" itemvalue="Catch.ApprovingText" />
     </list>
     <recent_temporary>
       <list size="5">
@@ -322,7 +339,9 @@
       <workItem from="1518473733331" duration="1223000" />
       <workItem from="1518509138448" duration="1827000" />
       <workItem from="1518724470213" duration="141000" />
-      <workItem from="1518733020912" duration="117000" />
+      <workItem from="1518733020912" duration="333000" />
+      <workItem from="1518886453019" duration="597000" />
+      <workItem from="1518887168685" duration="234000" />
     </task>
     <servers />
   </component>
@@ -359,18 +378,19 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="60112000" />
+    <option name="totallyTimeSpent" value="61159000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1650" height="1050" extended-state="6" />
+    <frame x="0" y="23" width="2048" height="1207" extended-state="0" />
+    <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20748925" sideWeight="0.48876405" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.29255056" sideWeight="0.48876405" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23359841" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23312883" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.43654823" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.35984096" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.35933393" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32940406" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4409204" sideWeight="0.51123595" order="2" side_tool="true" content_ui="tabs" />
@@ -513,13 +533,6 @@
     <entry file="file://$PROJECT_DIR$/code/BattleShipGame.h" />
     <entry file="file://$PROJECT_DIR$/code/fizzbuzz.h" />
     <entry file="file://$PROJECT_DIR$/cmake-build-debug/code/cmake_install.cmake" />
-    <entry file="file://$PROJECT_DIR$/code/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="16" lean-forward="false" selection-start-line="5" selection-start-column="16" selection-end-line="5" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cstring">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
@@ -549,26 +562,27 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.v.0.1.0.hpp" />
+    <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.v.0.2.0.hpp" />
+    <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="29" lean-forward="false" selection-start-line="0" selection-start-column="29" selection-end-line="0" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/code/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="31" lean-forward="false" selection-start-line="3" selection-start-column="31" selection-end-line="3" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tests/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="19" lean-forward="false" selection-start-line="5" selection-start-column="19" selection-end-line="5" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.v.0.2.0.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3345">
-          <caret line="450" column="0" lean-forward="false" selection-start-line="450" selection-start-column="0" selection-end-line="450" selection-end-column="0" />
+        <state relative-caret-position="105">
+          <caret line="7" column="63" lean-forward="false" selection-start-line="7" selection-start-column="63" selection-end-line="7" selection-end-column="63" />
           <folding />
         </state>
       </provider>
@@ -589,10 +603,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/ApprovalTests.hpp">
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="29" lean-forward="false" selection-start-line="0" selection-start-column="29" selection-end-line="0" selection-end-column="29" />
+        <state relative-caret-position="165">
+          <caret line="11" column="0" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
           <folding />
         </state>
       </provider>
