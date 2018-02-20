@@ -1,3 +1,5 @@
 # CMake
 cmake-build-debug/
+.vs/
 *.received.*
+cmake-build-vs/
