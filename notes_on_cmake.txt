@@ -2,3 +2,5 @@ mkdir visual_studio_2017
 cd    visual_studio_2017
 cmake -G "Visual Studio 15 2017" ..
 cd ..
+
+Then open the .sln file in visual_studio_2017
