@@ -1,0 +1,4 @@
+mkdir visual_studio_2017
+cd    visual_studio_2017
+cmake -G "Visual Studio 15 2017" ..
+cd ..
