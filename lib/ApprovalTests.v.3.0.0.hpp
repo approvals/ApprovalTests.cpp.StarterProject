@@ -10,6 +10,7 @@
 #include <stack>
 #include <sstream>
 #include <exception>
+#include <map>
 #include <functional>
 #include <ostream>
  // ******************** From: ApprovalWriter.h
@@ -19,9 +20,9 @@
 class ApprovalWriter
 {
 public:
-    virtual std::string GetFileExtension() = 0;
-    virtual void Write(std::string path) = 0;
-    virtual void CleanUpReceived(std::string receivedPath) = 0;
+    virtual std::string getFileExtensionWithDot() = 0;
+    virtual void write(std::string path) = 0;
+    virtual void cleanUpReceived(std::string receivedPath) = 0;
 };
 
 #endif 
@@ -41,12 +42,12 @@ public:
     StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
         : s( contents ), ext( fileExtensionWithDot ) {}
 
-    std::string GetFileExtension()
+    std::string getFileExtensionWithDot() override
     {
         return ext;
     }
 
-    void Write( std::string path )
+    void write( std::string path ) override
     {
         std::ofstream out( path.c_str(), std::ofstream::out );
         this->Write( out );
@@ -58,7 +59,7 @@ public:
         out << s << "\n";
     }
 
-    virtual void CleanUpReceived(std::string receivedPath){
+    virtual void cleanUpReceived(std::string receivedPath) override {
         remove(receivedPath.c_str());
     }
 
@@ -95,7 +96,7 @@ public:
     static void ensureFileExists(std::string fullFilePath) {
         if (!fileExists(fullFilePath)) {
             StringWriter s("", "");
-            s.Write(fullFilePath);
+            s.write(fullFilePath);
         }
     }
 
@@ -123,13 +124,13 @@ class ExistingFile : public ApprovalWriter{
     std::string filePath;
 public:
     ExistingFile(std::string filePath) : filePath(filePath){}
-    virtual std::string GetFileExtension(){
+    virtual std::string getFileExtensionWithDot() override {
         return FileUtils::getExtensionWithDot(filePath);
     }
-    virtual void Write(std::string path) {
+    virtual void write(std::string path) override {
         
     }
-    virtual void CleanUpReceived(std::string receivedPath){
+    virtual void cleanUpReceived(std::string receivedPath) override {
         
     }
 };
@@ -210,7 +211,7 @@ public:
         }
 #ifdef _WIN32
 
-        WIN32_FIND_DATA findFileData;
+        WIN32_FIND_DATAA findFileData;
         HANDLE hFind = FindFirstFileA(fullPath.c_str(), &findFileData);
 
         if (hFind != INVALID_HANDLE_VALUE)
@@ -240,7 +241,7 @@ class CommandLauncher
 {
 public:
     virtual ~CommandLauncher() {}
-    virtual bool Launch(std::vector<std::string> argv) = 0;
+    virtual bool launch(std::vector<std::string> argv) = 0;
 };
 
 #endif  
@@ -266,7 +267,7 @@ public:
 
     }
 
-    bool Launch(std::vector<std::string> argv)
+    bool launch(std::vector<std::string> argv) override
     {
         if (!exists(argv.front()))
         {
@@ -290,7 +291,7 @@ public:
 class Reporter {
 public:
     virtual ~Reporter() = default;
-    virtual bool Report(std::string received, std::string approved) const = 0;
+    virtual bool report(std::string received, std::string approved) const = 0;
 };
 
 #endif
@@ -312,13 +313,13 @@ protected:
     }
 
 public:
-    bool Report(std::string received, std::string approved) const override {
+    bool report(std::string received, std::string approved) const override {
         FileUtils::ensureFileExists(approved);
         std::vector<std::string> fullCommand;
         fullCommand.push_back(cmd);
         fullCommand.push_back(received);
         fullCommand.push_back(approved);
-        return l->Launch(fullCommand);
+        return l->launch(fullCommand);
     }
 };
 #endif 
@@ -466,11 +467,11 @@ public:
         }
     }
 
-    bool Report(std::string received, std::string approved) const override
+    bool report(std::string received, std::string approved) const override
     {
         for(auto& r : reporters)
         {
-            if (r->Report(received, approved))
+            if (r->report(received, approved))
             {
                 return true;
             }
@@ -711,8 +712,8 @@ using std::string;
 class ApprovalNamer
 {
 public:
-    virtual string getApprovedFile(string extentionWithDot) = 0;
-    virtual string getReceivedFile(string extentionWithDot) = 0;
+    virtual string getApprovedFile(string extensionWithDot) = 0;
+    virtual string getReceivedFile(string extensionWithDot) = 0;
 
 };
 
@@ -798,19 +799,19 @@ public:
 
     STATIC(TestName, currentTest, NULL)
 
-    virtual string getApprovedFile(string extentionWithDot) {
+    virtual string getApprovedFile(string extensionWithDot) {
 
-        return getFullFileName(".approved", extentionWithDot);
+        return getFullFileName(".approved", extensionWithDot);
     }
 
-    virtual string getReceivedFile(string extentionWithDot) {
+    virtual string getReceivedFile(string extensionWithDot) {
 
-        return getFullFileName(".received", extentionWithDot);
+        return getFullFileName(".received", extensionWithDot);
     }
 
-    string getFullFileName(string approved, string extentionWithDot) {
+    string getFullFileName(string approved, string extensionWithDot) {
         std::stringstream ext;
-        ext << getDirectory() << getFileName() << "." << getTestName() << approved << extentionWithDot;
+        ext << getDirectory() << getFileName() << "." << getTestName() << approved << extensionWithDot;
         return ext.str();
     }
 };
@@ -829,15 +830,73 @@ public:
     ExistingFileNamer(std::string filePath): filePath(filePath){
 
     }
-    virtual string getApprovedFile(string extentionWithDot) {
-        return namer.getApprovedFile(extentionWithDot);
+    virtual string getApprovedFile(string extensionWithDot) {
+        return namer.getApprovedFile(extensionWithDot);
     }
-    virtual string getReceivedFile(string extentionWithDot) {
+    virtual string getReceivedFile(string extensionWithDot) {
         return filePath;
     }
 
 };
 
+#endif 
+
+ // ******************** From: ApprovalComparator.h
+#ifndef APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
+#define APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
+
+
+class ApprovalComparator
+{
+public:
+    virtual ~ApprovalComparator() = default;
+
+    virtual bool contentsAreEquivalent(std::string receivedPath,
+                                       std::string approvedPath) const = 0;
+};
+
+#endif 
+
+ // ******************** From: TextFileComparator.h
+#ifndef APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
+#define APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
+
+
+class TextFileComparator : public ApprovalComparator
+{
+public:
+    static std::ifstream::int_type getNextRelevantCharacter(std::ifstream& astream)
+    {
+        auto ch = astream.get();
+        if (ch == '\r')
+        {
+            return astream.get();
+        }
+        else
+        {
+            return ch;
+        }
+    }
+
+    virtual bool contentsAreEquivalent(std::string receivedPath,
+                                       std::string approvedPath) const
+    {
+        std::ifstream astream(approvedPath.c_str(),
+                              std::ios::binary | std::ifstream::in);
+        std::ifstream rstream(receivedPath.c_str(),
+                              std::ios::binary | std::ifstream::in);
+
+        while (astream.good() && rstream.good()) {
+            int a = getNextRelevantCharacter(astream);
+            int r = getNextRelevantCharacter(rstream);
+
+            if (a != r) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
 #endif 
 
  // ******************** From: ApprovalException.h
@@ -903,68 +962,63 @@ public:
 
 
 class FileApprover {
+private:
+    using ComparatorContainer = std::map< std::string, std::shared_ptr<ApprovalComparator> >;
+    STATIC(ComparatorContainer, comparators, new ComparatorContainer())
+
 public:
     FileApprover() {};
 
     ~FileApprover() {};
 
-    static std::ifstream::int_type getNextRelevantCharacter(std::ifstream& astream)
+    static void registerComparator(std::string extensionWithDot, std::shared_ptr<ApprovalComparator> comparator)
     {
-        auto ch = astream.get();
-        if (ch == '\r')
-        {
-            return astream.get();
+        comparators()[extensionWithDot] = comparator;
+    }
+
+    static std::shared_ptr<ApprovalComparator> getComparatorForFile(string receivedPath) {
+        const std::string fileExtension = FileUtils::getExtensionWithDot(receivedPath);
+        auto iterator = comparators().find(fileExtension);
+        if (iterator != comparators().end()) {
+            return iterator->second;
         }
-        else
-        {
-            return ch;
+        return std::make_shared<TextFileComparator>();
+    }
+
+    
+    static void verify(std::string receivedPath,
+                       std::string approvedPath,
+                       const ApprovalComparator& comparator) {
+        if (!FileUtils::fileExists(approvedPath)) {
+            throw ApprovalMissingException(receivedPath, approvedPath);
+        }
+
+        if (!FileUtils::fileExists(receivedPath)) {
+            throw ApprovalMissingException(approvedPath, receivedPath);
+        }
+
+        if (!comparator.contentsAreEquivalent(receivedPath, approvedPath)) {
+            throw ApprovalMismatchException(receivedPath, approvedPath);
         }
     }
 
-    static ApprovalException *verify(std::string receivedPath,
-                                     std::string approvedPath) {
-        int asize = FileUtils::fileSize(approvedPath);
-
-        if (-1 == asize) {
-            return new ApprovalMissingException(receivedPath, approvedPath);
-        }
-
-        int rsize = FileUtils::fileSize(receivedPath);
-
-        if (-1 == rsize) {
-            return new ApprovalMissingException(approvedPath, receivedPath);
-        }
-
-        std::ifstream astream(approvedPath.c_str(),
-                              std::ios::binary | std::ifstream::in);
-        std::ifstream rstream(receivedPath.c_str(),
-                              std::ios::binary | std::ifstream::in);
-
-        while (astream.good() && rstream.good()) {
-            int a = getNextRelevantCharacter(astream);
-            int r = getNextRelevantCharacter(rstream);
-
-            if (a != r) {
-                return new ApprovalMismatchException(receivedPath, approvedPath);
-            }
-        }
-        return NULL;
+    static void verify(std::string receivedPath,
+                       std::string approvedPath) {
+        verify(receivedPath, approvedPath, *getComparatorForFile(receivedPath));
     }
-
 
     static void verify(ApprovalNamer& n, ApprovalWriter& s, const Reporter& r) {
-        std::string approvedPath = n.getApprovedFile(s.GetFileExtension());
-        std::string receivedPath = n.getReceivedFile(s.GetFileExtension());
-        s.Write(receivedPath);
-        ApprovalException *ae = verify(receivedPath, approvedPath);
-
-        if (ae != NULL) {
-            r.Report(receivedPath, approvedPath);
-            ApprovalException e(*ae);
-            delete ae;
-            throw e;
-        } else {
-            s.CleanUpReceived(receivedPath);
+        std::string approvedPath = n.getApprovedFile(s.getFileExtensionWithDot());
+        std::string receivedPath = n.getReceivedFile(s.getFileExtensionWithDot());
+        s.write(receivedPath);
+        try
+        {
+            verify(receivedPath, approvedPath);
+            s.cleanUpReceived(receivedPath);
+        }
+        catch (const ApprovalException&) {
+            r.report(receivedPath, approvedPath);
+            throw;
         }
     }
 
@@ -1257,7 +1311,8 @@ public:
                                               inputs6,
                                               inputs7,
                                               inputs8,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
 
@@ -1312,7 +1367,8 @@ public:
                                               inputs5,
                                               inputs6,
                                               inputs7,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1360,7 +1416,8 @@ public:
                                               inputs4,
                                               inputs5,
                                               inputs6,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1402,7 +1459,8 @@ public:
                                               inputs3,
                                               inputs4,
                                               inputs5,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1438,7 +1496,8 @@ public:
                                               inputs2,
                                               inputs3,
                                               inputs4,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1468,7 +1527,8 @@ public:
                                               inputs1,
                                               inputs2,
                                               inputs3,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1492,7 +1552,8 @@ public:
                                                       Empty _){return converter(i1, i2);},
                                               inputs1,
                                               inputs2,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 
     template <
@@ -1510,7 +1571,8 @@ public:
                                                       typename Container1::value_type i1,
                                                       Empty _){return converter(i1);},
                                               inputs1,
-                                              EMPTY);
+                                              EMPTY,
+                                              reporter);
     }
 };
 
@@ -1621,7 +1683,7 @@ public:
         }
     }
 
-    virtual bool Report(std::string received, std::string approved) const override
+    virtual bool report(std::string received, std::string approved) const override
     {
         copyToClipboard(getCommandLineFor(received, approved, SystemUtils::isWindowsOs()));
         return true;
@@ -1657,12 +1719,12 @@ public:
         }
     }
 
-    bool Report(std::string received, std::string approved) const override
+    bool report(std::string received, std::string approved) const override
     {
         bool result = false;
         for(auto& r : reporters)
         {
-            result |= r->Report(received, approved);
+            result |= r->report(received, approved);
         }
         return result;
     }
@@ -1679,7 +1741,7 @@ public:
 class QuietReporter : public Reporter
 {
 public:
-    bool Report(std::string received, std::string approved) const override
+    bool report(std::string received, std::string approved) const override
     {
         return true;
     }
