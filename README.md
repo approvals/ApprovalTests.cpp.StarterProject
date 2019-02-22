@@ -15,6 +15,11 @@ This is a starter project for:
 
 Notes:
 
-You will need a Diff tool
+* You will need a Diff tool.
+* Suggestions: 
+    * Mac: [DiffMerge](https://sourcegear.com/diffmerge/)
+    * Windows: [WinMerge](winmerge.org/)
+    * Linux: [meld](http://meldmerge.org/)
+
 
 
