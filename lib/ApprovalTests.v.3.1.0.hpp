@@ -228,6 +228,44 @@ public:
         return fullPath;
 
     }
+
+    static std::string safeGetEnvForWindows(char const *name)
+    {
+#ifdef _WIN32
+        
+        
+        
+
+        size_t size;
+        getenv_s(&size, nullptr, 0, name);
+
+        if (size != 0)
+        {
+            std::string result;
+            result.resize(size);
+            getenv_s(&size, &*result.begin(), size, name);
+            result.pop_back();
+            return result;
+        }
+#endif
+        return std::string();
+    }
+
+    static std::string safeGetEnvForNonWindows(char const *name)
+    {
+        char* p = nullptr;
+#ifndef _WIN32
+        p = getenv(name);
+#endif
+        return (p != nullptr) ? p : std::string();
+    }
+
+    
+    static std::string safeGetEnv(char const *name)
+    {
+        return isWindowsOs() ? safeGetEnvForWindows(name) : safeGetEnvForNonWindows(name);
+    }
+
 };
 #endif
 
@@ -353,17 +391,30 @@ struct DiffInfo
 
     std::string getProgramForOs() const
     {
-       
         std::string result = program;
-        if (result.rfind("{ProgramFiles}", 0) == 0) {
-            auto result1 = StringUtils::replaceAll(result, "{ProgramFiles}", "c:\\Program Files\\");
-       
-            if (FileUtils::fileExists(result1)) {
-                result = result1;
-            }
-            auto result2 = StringUtils::replaceAll(result, "{ProgramFiles}", "c:\\Program Files (x86)\\");
-            if (FileUtils::fileExists(result2)) {
-                result =  result2;
+        if (result.rfind("{ProgramFiles}", 0) == 0)
+        {
+            const std::vector<const char*> envVars =
+            {
+                "ProgramFiles",
+                "ProgramW6432",
+                "ProgramFiles(x86)"
+            };
+
+            for(const auto& envVar : envVars)
+            {
+                std::string envVarValue = SystemUtils::safeGetEnv(envVar);
+                if (envVarValue.empty())
+                {
+                    continue;
+                }
+                envVarValue += '\\';
+
+                auto result1 = StringUtils::replaceAll(result, "{ProgramFiles}", envVarValue);
+                if (FileUtils::fileExists(result1))
+                {
+                    return result1;
+                }
             }
         }
         return result;
@@ -379,7 +430,7 @@ struct DiffInfo
 
 
 
-#define ENTRY(name, defaultValue) \
+#define APPROVAL_TESTS_MACROS_ENTRY(name, defaultValue) \
         static DiffInfo name() { return defaultValue; }
 
 
@@ -387,45 +438,45 @@ namespace DiffPrograms {
 
 
     namespace Mac {
-        ENTRY(DIFF_MERGE,
+        APPROVAL_TESTS_MACROS_ENTRY(DIFF_MERGE,
               DiffInfo("/Applications/DiffMerge.app/Contents/MacOS/DiffMerge", "%s %s -nosplash", Type::TEXT))
 
-        ENTRY(BEYOND_COMPARE, DiffInfo("/Applications/Beyond Compare.app/Contents/MacOS/bcomp", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(BEYOND_COMPARE, DiffInfo("/Applications/Beyond Compare.app/Contents/MacOS/bcomp", Type::TEXT))
 
-        ENTRY(KALEIDOSCOPE, DiffInfo("/Applications/Kaleidoscope.app/Contents/MacOS/ksdiff", Type::TEXT_AND_IMAGE))
+        APPROVAL_TESTS_MACROS_ENTRY(KALEIDOSCOPE, DiffInfo("/Applications/Kaleidoscope.app/Contents/MacOS/ksdiff", Type::TEXT_AND_IMAGE))
 
-        ENTRY(KDIFF3, DiffInfo("/Applications/kdiff3.app/Contents/MacOS/kdiff3", "%s %s -m", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(KDIFF3, DiffInfo("/Applications/kdiff3.app/Contents/MacOS/kdiff3", "%s %s -m", Type::TEXT))
 
-        ENTRY(P4MERGE, DiffInfo("/Applications/p4merge.app/Contents/MacOS/p4merge", Type::TEXT_AND_IMAGE))
+        APPROVAL_TESTS_MACROS_ENTRY(P4MERGE, DiffInfo("/Applications/p4merge.app/Contents/MacOS/p4merge", Type::TEXT_AND_IMAGE))
 
-        ENTRY(TK_DIFF, DiffInfo("/Applications/TkDiff.app/Contents/MacOS/tkdiff", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(TK_DIFF, DiffInfo("/Applications/TkDiff.app/Contents/MacOS/tkdiff", Type::TEXT))
 
-        ENTRY(VS_CODE, DiffInfo("/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code", "-d %s %s", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(VS_CODE, DiffInfo("/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code", "-d %s %s", Type::TEXT))
     }
     namespace Linux {
         
-        ENTRY(KDIFF3, DiffInfo("kdiff3", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(KDIFF3, DiffInfo("kdiff3", Type::TEXT))
 
-        ENTRY(MELD, DiffInfo("meld", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(MELD, DiffInfo("meld", Type::TEXT))
     }
     namespace Windows {
-        ENTRY(BEYOND_COMPARE_3, DiffInfo("{ProgramFiles}Beyond Compare 3\\BCompare.exe", Type::TEXT_AND_IMAGE))
+        APPROVAL_TESTS_MACROS_ENTRY(BEYOND_COMPARE_3, DiffInfo("{ProgramFiles}Beyond Compare 3\\BCompare.exe", Type::TEXT_AND_IMAGE))
 
-        ENTRY(BEYOND_COMPARE_4, DiffInfo("{ProgramFiles}Beyond Compare 4\\BCompare.exe", Type::TEXT_AND_IMAGE))
+        APPROVAL_TESTS_MACROS_ENTRY(BEYOND_COMPARE_4, DiffInfo("{ProgramFiles}Beyond Compare 4\\BCompare.exe", Type::TEXT_AND_IMAGE))
 
-        ENTRY(TORTOISE_IMAGE_DIFF,
+        APPROVAL_TESTS_MACROS_ENTRY(TORTOISE_IMAGE_DIFF,
               DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseIDiff.exe", "/left:%s /right:%s", Type::IMAGE))
 
-        ENTRY(TORTOISE_TEXT_DIFF, DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseMerge.exe", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(TORTOISE_TEXT_DIFF, DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseMerge.exe", Type::TEXT))
 
-        ENTRY(WIN_MERGE_REPORTER, DiffInfo("{ProgramFiles}WinMerge\\WinMergeU.exe", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(WIN_MERGE_REPORTER, DiffInfo("{ProgramFiles}WinMerge\\WinMergeU.exe", Type::TEXT_AND_IMAGE))
 
-        ENTRY(ARAXIS_MERGE, DiffInfo("{ProgramFiles}Araxis\\Araxis Merge\\Compare.exe", Type::TEXT_AND_IMAGE))
+        APPROVAL_TESTS_MACROS_ENTRY(ARAXIS_MERGE, DiffInfo("{ProgramFiles}Araxis\\Araxis Merge\\Compare.exe", Type::TEXT_AND_IMAGE))
 
-        ENTRY(CODE_COMPARE, DiffInfo("{ProgramFiles}Devart\\Code Compare\\CodeCompare.exe", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(CODE_COMPARE, DiffInfo("{ProgramFiles}Devart\\Code Compare\\CodeCompare.exe", Type::TEXT))
 
-        ENTRY(KDIFF3, DiffInfo("{ProgramFiles}KDiff3\\kdiff3.exe", Type::TEXT))
-        ENTRY(VS_CODE, DiffInfo("{ProgramFiles}Microsoft VS Code\\Code.exe", "-d %s %s", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(KDIFF3, DiffInfo("{ProgramFiles}KDiff3\\kdiff3.exe", Type::TEXT))
+        APPROVAL_TESTS_MACROS_ENTRY(VS_CODE, DiffInfo("{ProgramFiles}Microsoft VS Code\\Code.exe", "-d %s %s", Type::TEXT))
 
     }
 }
@@ -681,22 +732,28 @@ public:
 #endif 
 
  // ******************** From: Macros.h
-#ifndef CATCHPLAYGROUND_MARCOS_H
-#define CATCHPLAYGROUND_MARCOS_H
+#ifndef APPROVALTESTS_CPP_MACROS_H
+#define APPROVALTESTS_CPP_MACROS_H
 
 
-#define STATIC(type, name, defaultValue) \
-      static type &name(type *value = NULL) { \
-static type *staticValue; \
-if (value != NULL) { \
-staticValue = value; \
-} \
-if (staticValue == NULL) \
-{ \
- staticValue = defaultValue; \
-} \
-return *staticValue; \
-} \
+#define APPROVAL_TESTS_MACROS_STATIC(type, name, defaultValue) \
+static type &name(type *value = NULL) { \
+    static type *staticValue; \
+    if (value != NULL) \
+    { \
+        staticValue = value; \
+    } \
+    if (staticValue == NULL) \
+    { \
+        staticValue = defaultValue; \
+    } \
+    if ( staticValue == nullptr ) \
+    { \
+        const char* helpMessage = "The variable in " #name "() is not initialised"; \
+        throw std::runtime_error( helpMessage ); \
+    } \
+    return *staticValue; \
+}
 
 
 
@@ -749,7 +806,7 @@ public:
 
     string getTestName() {
         std::stringstream ext;
-        auto test = currentTest();
+        auto test = getCurrentTest();
         for (size_t i = 0; i < test.sections.size(); i++) {
             if (0 < i) {
                 ext << ".";
@@ -783,8 +840,44 @@ public:
         return result.str();
     }
 
+// <SingleHpp unalterable>
+    TestName &getCurrentTest() const
+    {
+        try
+        {
+            return currentTest();
+        }
+        catch( const std::runtime_error& )
+        {
+            std::string lineBreak = "************************************************************************************n";
+            std::string lineBuffer = "*                                                                                  *n";
+            std::string helpMessage =
+                "nn" + lineBreak + lineBuffer +
+R"(* Welcome to Approval Tests.
+* 
+* You have forgotten to configure your test framework for Approval Tests.
+* 
+* To do this in Catch, add the following to your main.cpp:
+* 
+*     #define APPROVALS_CATCH
+*     #include "ApprovalTests.hpp"
+* 
+* To do this in Google Test, add the following to your main.cpp:
+* 
+*     #define APPROVALS_GOOGLETEST
+*     #include "ApprovalTests.hpp"
+* 
+* For more information, please visit:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
+)" +
+                    lineBuffer + lineBreak + 'n';
+throw std::runtime_error( helpMessage );
+        }
+    }
+// </SingleHpp>
+
     string getFileName() {
-        auto file = currentTest().getFileName();
+        auto file = getCurrentTest().getFileName();
         auto start = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
         auto end = file.rfind(".");
         auto fileName = file.substr(start, end - start);
@@ -792,12 +885,12 @@ public:
     }
 
     string getDirectory() {
-        auto file = currentTest().getFileName();
+        auto file = getCurrentTest().getFileName();
         auto end = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
         return file.substr(0, end);
     }
 
-    STATIC(TestName, currentTest, NULL)
+    APPROVAL_TESTS_MACROS_STATIC(TestName, currentTest, NULL)
 
     virtual string getApprovedFile(string extensionWithDot) {
 
@@ -964,7 +1057,7 @@ public:
 class FileApprover {
 private:
     using ComparatorContainer = std::map< std::string, std::shared_ptr<ApprovalComparator> >;
-    STATIC(ComparatorContainer, comparators, new ComparatorContainer())
+    APPROVAL_TESTS_MACROS_STATIC(ComparatorContainer, comparators, new ComparatorContainer())
 
 public:
     FileApprover() {};
@@ -1046,9 +1139,19 @@ public:
     }
 
     template<typename T>
-    static void verify(T contents, const Reporter &reporter = DiffReporter()) {
+    static void verify(const T& contents, const Reporter &reporter = DiffReporter()) {
         std::stringstream s;
         s << contents;
+        verify(s.str(), reporter);
+    }
+
+    template<typename T>
+    static void verify(const T& contents,
+                       std::function<void(const T&, std::ostream &)> converter,
+                       const Reporter &reporter = DiffReporter())
+    {
+        std::stringstream s;
+        converter(contents, s);
         verify(s.str(), reporter);
     }
 
@@ -1168,8 +1271,6 @@ public:
     }
 
 };
-
-#define EMPTY std::vector<Empty>{Empty()}
 
 class CombinationApprovals
 {
@@ -1311,7 +1412,7 @@ public:
                                               inputs6,
                                               inputs7,
                                               inputs8,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1367,7 +1468,7 @@ public:
                                               inputs5,
                                               inputs6,
                                               inputs7,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1416,7 +1517,7 @@ public:
                                               inputs4,
                                               inputs5,
                                               inputs6,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1459,7 +1560,7 @@ public:
                                               inputs3,
                                               inputs4,
                                               inputs5,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1496,7 +1597,7 @@ public:
                                               inputs2,
                                               inputs3,
                                               inputs4,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1527,7 +1628,7 @@ public:
                                               inputs1,
                                               inputs2,
                                               inputs3,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1552,7 +1653,7 @@ public:
                                                       Empty _){return converter(i1, i2);},
                                               inputs1,
                                               inputs2,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
     }
 
@@ -1571,8 +1672,17 @@ public:
                                                       typename Container1::value_type i1,
                                                       Empty _){return converter(i1);},
                                               inputs1,
-                                              EMPTY,
+                                              empty(),
                                               reporter);
+    }
+
+    
+    
+    
+    using EmptyContainer = std::vector<Empty>;
+    static EmptyContainer empty()
+    {
+        return EmptyContainer{Empty()};
     }
 };
 
@@ -1689,7 +1799,7 @@ public:
         return true;
     }
 
-    void copyToClipboard(const std::string& newClipboard) const {
+    static void copyToClipboard(const std::string& newClipboard) {
         
 
         const std::string clipboardCommand = SystemUtils::isWindowsOs() ? "clip" : "pbclip";
