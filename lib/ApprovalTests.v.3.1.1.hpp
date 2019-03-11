@@ -1,3 +1,5 @@
+// Approval Tests version v.3.1.1
+// More information at: https://github.com/approvals/ApprovalTests.cpp
 #include <string>
 #include <fstream>
 #include <sys/stat.h>
@@ -852,7 +854,7 @@ public:
             std::string lineBreak = "************************************************************************************n";
             std::string lineBuffer = "*                                                                                  *n";
             std::string helpMessage =
-                "nn" + lineBreak + lineBuffer +
+                "nn" + lineBreak + lineBuffer + 
 R"(* Welcome to Approval Tests.
 * 
 * You have forgotten to configure your test framework for Approval Tests.
@@ -871,7 +873,7 @@ R"(* Welcome to Approval Tests.
 * https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
 )" +
                     lineBuffer + lineBreak + 'n';
-throw std::runtime_error( helpMessage );
+            throw std::runtime_error( helpMessage );
         }
     }
 // </SingleHpp>
