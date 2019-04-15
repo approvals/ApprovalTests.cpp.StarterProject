@@ -1,21 +1,75 @@
-// Approval Tests version v.3.2.0
+// Approval Tests version v.3.3.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 #include <string>
+#include <algorithm>
+#include <sstream>
 #include <fstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <memory>
 #include <vector>
-#include <algorithm>
-#include <sstream>
 #include <iostream>
 #include <stdlib.h>
 #include <numeric>
-#include <memory>
 #include <stack>
 #include <exception>
 #include <map>
 #include <functional>
 #include <ostream>
+ // ******************** From: Blocker.h
+#ifndef APPROVALTESTS_CPP_BLOCKER_H
+#define APPROVALTESTS_CPP_BLOCKER_H
+
+class Blocker
+{
+public:
+    virtual bool isBlockingOnThisMachine() const = 0;
+};
+
+#endif 
+
+ // ******************** From: StringUtils.h
+
+
+#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
+#define APPROVALTESTS_CPP_STRINGUTILS_H
+
+
+class StringUtils
+{
+public:
+    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
+        size_t start_pos = 0;
+        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
+            inText.replace(start_pos, find.length(), replaceWith);
+            start_pos += replaceWith.length(); 
+        }
+        return inText;
+    }
+
+    static bool contains(std::string inText, const std::string& find)
+    {
+        return inText.find(find, 0) != std::string::npos;
+    }
+
+    static std::string toLower(std::string inText)
+    {
+        std::string copy(inText);
+        std::transform(inText.begin(), inText.end(), copy.begin(), ::tolower);
+        return copy;
+    }
+
+    template<typename T>
+    static std::string toString(const T& contents)
+    {
+        std::stringstream s;
+        s << contents;
+        return s.str();
+    }
+
+};
+#endif 
+
  // ******************** From: ApprovalWriter.h
 #ifndef APPROVALTESTS_CPP_APPROVALWRITER_H
 #define APPROVALTESTS_CPP_APPROVALWRITER_H
@@ -120,6 +174,210 @@ public:
         out << content;
     }
 };
+
+#endif 
+
+ // ******************** From: SystemUtils.h
+#ifndef APPROVALTESTS_CPP_SYSTEMUTILS_H
+#define APPROVALTESTS_CPP_SYSTEMUTILS_H
+// <SingleHpp unalterable>
+#ifdef _WIN32
+    // ReSharper disable once CppUnusedIncludeDirective
+    #include <io.h>
+    #include <windows.h>
+    #include <direct.h>
+#else
+    // ReSharper disable once CppUnusedIncludeDirective
+    #include <unistd.h>
+#endif
+// </SingleHpp>
+
+
+class SystemUtils
+{
+public:
+    static bool isWindowsOs()
+    {
+#ifdef _WIN32
+        return true;
+#else
+        return false;
+#endif
+
+    }
+    
+    static bool isCygwin()
+    {
+#ifdef __CYGWIN__
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    static std::string getDirectorySeparator()
+    {
+        return isWindowsOs() ? "\\" : "/";
+    }
+
+    
+    static std::string checkFilenameCase(const std::string& fullPath)
+    {
+        if (!isWindowsOs() || !FileUtils::fileExists(fullPath))
+        {
+            return fullPath;
+        }
+#ifdef _WIN32
+
+        WIN32_FIND_DATAA findFileData;
+        HANDLE hFind = FindFirstFileA(fullPath.c_str(), &findFileData);
+
+        if (hFind != INVALID_HANDLE_VALUE)
+        {
+            const std::string fixedFilename = findFileData.cFileName;
+            const std::string fixedPath = 
+                StringUtils::replaceAll( fullPath, StringUtils::toLower(fixedFilename), fixedFilename );
+            FindClose(hFind);
+            return fixedPath;
+        }
+
+
+#endif
+        return fullPath;
+
+    }
+
+    static std::string safeGetEnvForWindows(char const *name)
+    {
+#ifdef _WIN32
+        
+        
+        
+
+        size_t size;
+        getenv_s(&size, nullptr, 0, name);
+
+        if (size != 0)
+        {
+            std::string result;
+            result.resize(size);
+            getenv_s(&size, &*result.begin(), size, name);
+            result.pop_back();
+            return result;
+        }
+#endif
+        return std::string();
+    }
+
+    static std::string safeGetEnvForNonWindows(char const *name)
+    {
+        char* p = nullptr;
+#ifndef _WIN32
+        p = getenv(name);
+#endif
+        return (p != nullptr) ? p : std::string();
+    }
+
+    
+    static std::string safeGetEnv(char const *name)
+    {
+        return isWindowsOs() ? safeGetEnvForWindows(name) : safeGetEnvForNonWindows(name);
+    }
+    
+    static std::string getMachineName()
+    {
+        auto name = safeGetEnv("COMPUTERNAME");
+        if ( ! name.empty())
+        {
+            return name;
+        }
+
+        name = safeGetEnv("HOSTNAME");
+        if ( ! name.empty())
+        {
+            return name;
+        }
+        
+        return "Unknown Computer";
+    }
+
+    static void makeDirectoryForWindows(std::string directory)
+    {
+#ifdef _WIN32
+        int nError = _mkdir(directory.c_str());
+        if (nError != 0)
+        {
+            std::string helpMessage = std::string("Unable to create directory: ") + directory;
+            throw std::runtime_error( helpMessage );
+        }
+#endif
+    }
+
+    static void makeDirectoryForNonWindows(std::string directory)
+    {
+#ifndef _WIN32
+        mode_t nMode = 0733; 
+        int nError = mkdir(directory.c_str(),nMode);
+        if (nError != 0)
+        {
+            std::string helpMessage = std::string("Unable to create directory: ") + directory;
+            throw std::runtime_error( helpMessage );
+        }
+#endif
+    }
+
+    static void makeDirectory(std::string directory)
+    {
+        makeDirectoryForWindows(directory);
+        makeDirectoryForNonWindows(directory);
+    }
+
+    static void ensureDirectoryExists(std::string fullFilePath)
+    {
+        if (!FileUtils::fileExists(fullFilePath))
+        {
+            makeDirectory(fullFilePath);
+        }
+    }
+};
+#endif
+
+ // ******************** From: MachineBlocker.h
+#ifndef APPROVALTESTS_CPP_MACHINEBLOCKER_H
+#define APPROVALTESTS_CPP_MACHINEBLOCKER_H
+
+
+
+class MachineBlocker : public Blocker
+{
+private:
+    std::string machineName;
+    bool block;
+
+    MachineBlocker() = delete;
+
+public:
+    MachineBlocker( const std::string& machineName, bool block ) : machineName(machineName), block(block)
+    {
+    }
+
+    static MachineBlocker onMachineNamed( const std::string& machineName )
+    {
+        return MachineBlocker(machineName, true);
+    }
+
+    static MachineBlocker onMachinesNotNamed( const std::string& machineName )
+    {
+        return MachineBlocker(machineName, false);
+    }
+
+    virtual bool isBlockingOnThisMachine() const override
+    {
+        const auto isMachine = (SystemUtils::getMachineName() == machineName);
+        return isMachine == block;
+    }
+};
+
 
 #endif 
 
@@ -234,196 +492,6 @@ public:
     }
 };
 #endif 
-
- // ******************** From: StringUtils.h
-
-
-#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
-#define APPROVALTESTS_CPP_STRINGUTILS_H
-
-
-class StringUtils
-{
-public:
-    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
-        size_t start_pos = 0;
-        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
-            inText.replace(start_pos, find.length(), replaceWith);
-            start_pos += replaceWith.length(); 
-        }
-        return inText;
-    }
-
-    static bool contains(std::string inText, const std::string& find)
-    {
-        return inText.find(find, 0) != std::string::npos;
-    }
-
-    static std::string toLower(std::string inText)
-    {
-        std::string copy(inText);
-        std::transform(inText.begin(), inText.end(), copy.begin(), ::tolower);
-        return copy;
-    }
-
-    template<typename T>
-    static std::string toString(const T& contents)
-    {
-        std::stringstream s;
-        s << contents;
-        return s.str();
-    }
-
-};
-#endif 
-
- // ******************** From: SystemUtils.h
-#ifndef APPROVALTESTS_CPP_SYSTEMUTILS_H
-#define APPROVALTESTS_CPP_SYSTEMUTILS_H
-// <SingleHpp unalterable>
-#ifdef _WIN32
-    // ReSharper disable once CppUnusedIncludeDirective
-    #include <io.h>
-    #include <windows.h>
-    #include <direct.h>
-#else
-    // ReSharper disable once CppUnusedIncludeDirective
-    #include <unistd.h>
-#endif
-// </SingleHpp>
-
-
-class SystemUtils
-{
-public:
-    static bool isWindowsOs()
-    {
-#ifdef _WIN32
-        return true;
-#else
-        return false;
-#endif
-
-    }
-    
-    static bool isCygwin()
-    {
-#ifdef __CYGWIN__
-        return true;
-#else
-        return false;
-#endif
-    }
-
-    static std::string getDirectorySeparator()
-    {
-        return isWindowsOs() ? "\\" : "/";
-    }
-
-    
-    static std::string checkFilenameCase(const std::string& fullPath)
-    {
-        if (!isWindowsOs() || !FileUtils::fileExists(fullPath))
-        {
-            return fullPath;
-        }
-#ifdef _WIN32
-
-        WIN32_FIND_DATAA findFileData;
-        HANDLE hFind = FindFirstFileA(fullPath.c_str(), &findFileData);
-
-        if (hFind != INVALID_HANDLE_VALUE)
-        {
-            const std::string fixedFilename = findFileData.cFileName;
-            const std::string fixedPath = 
-                StringUtils::replaceAll( fullPath, StringUtils::toLower(fixedFilename), fixedFilename );
-            FindClose(hFind);
-            return fixedPath;
-        }
-
-
-#endif
-        return fullPath;
-
-    }
-
-    static std::string safeGetEnvForWindows(char const *name)
-    {
-#ifdef _WIN32
-        
-        
-        
-
-        size_t size;
-        getenv_s(&size, nullptr, 0, name);
-
-        if (size != 0)
-        {
-            std::string result;
-            result.resize(size);
-            getenv_s(&size, &*result.begin(), size, name);
-            result.pop_back();
-            return result;
-        }
-#endif
-        return std::string();
-    }
-
-    static std::string safeGetEnvForNonWindows(char const *name)
-    {
-        char* p = nullptr;
-#ifndef _WIN32
-        p = getenv(name);
-#endif
-        return (p != nullptr) ? p : std::string();
-    }
-
-    
-    static std::string safeGetEnv(char const *name)
-    {
-        return isWindowsOs() ? safeGetEnvForWindows(name) : safeGetEnvForNonWindows(name);
-    }
-
-    static void makeDirectoryForWindows(std::string directory)
-    {
-#ifdef _WIN32
-        int nError = _mkdir(directory.c_str());
-        if (nError != 0)
-        {
-            std::string helpMessage = std::string("Unable to create directory: ") + directory;
-            throw std::runtime_error( helpMessage );
-        }
-#endif
-    }
-
-    static void makeDirectoryForNonWindows(std::string directory)
-    {
-#ifndef _WIN32
-        mode_t nMode = 0733; 
-        int nError = mkdir(directory.c_str(),nMode);
-        if (nError != 0)
-        {
-            std::string helpMessage = std::string("Unable to create directory: ") + directory;
-            throw std::runtime_error( helpMessage );
-        }
-#endif
-    }
-
-    static void makeDirectory(std::string directory)
-    {
-        makeDirectoryForWindows(directory);
-        makeDirectoryForNonWindows(directory);
-    }
-
-    static void ensureDirectoryExists(std::string fullFilePath)
-    {
-        if (!FileUtils::fileExists(fullFilePath))
-        {
-            makeDirectory(fullFilePath);
-        }
-    }
-};
-#endif
 
  // ******************** From: SystemLauncher.h
 
@@ -890,17 +958,17 @@ public:
 
 #endif 
 
- // ******************** From: DefaultReporter.h
-#ifndef APPROVALTESTS_CPP_DEFAULTREPORTER_H
-#define APPROVALTESTS_CPP_DEFAULTREPORTER_H
+ // ******************** From: DefaultReporterFactory.h
+#ifndef APPROVALTESTS_CPP_DEFAULTREPORTERFACTORY_H
+#define APPROVALTESTS_CPP_DEFAULTREPORTERFACTORY_H
 
 
 
-class DefaultReporter : public Reporter
+class DefaultReporterFactory
 {
 private:
     using ReporterContainer = std::vector< std::shared_ptr<Reporter> >;
-    APPROVAL_TESTS_MACROS_STATIC(ReporterContainer, defaultReporterContainer, DefaultReporter::createReporterContainer())
+    APPROVAL_TESTS_MACROS_STATIC(ReporterContainer, defaultReporterContainer, DefaultReporterFactory::createReporterContainer())
     
     static ReporterContainer* createReporterContainer()
     {
@@ -910,11 +978,6 @@ private:
     }
 
 public:
-    virtual bool report(std::string received, std::string approved) const override
-    {
-        return getDefaultReporter()->report(received, approved);
-    }
-
     static std::shared_ptr<Reporter> getDefaultReporter()
     {
         return defaultReporterContainer().at(0);
@@ -941,13 +1004,30 @@ private:
 public:
     explicit DefaultReporterDisposer(const std::shared_ptr<Reporter>& reporter)
     {
-        previous_result = DefaultReporter::getDefaultReporter();
-        DefaultReporter::setDefaultReporter(reporter);
+        previous_result = DefaultReporterFactory::getDefaultReporter();
+        DefaultReporterFactory::setDefaultReporter(reporter);
     }
 
     ~DefaultReporterDisposer()
     {
-        DefaultReporter::setDefaultReporter(previous_result);
+        DefaultReporterFactory::setDefaultReporter(previous_result);
+    }
+};
+
+#endif 
+
+ // ******************** From: DefaultReporter.h
+#ifndef APPROVALTESTS_CPP_DEFAULTREPORTER_H
+#define APPROVALTESTS_CPP_DEFAULTREPORTER_H
+
+
+
+class DefaultReporter : public Reporter
+{
+public:
+    virtual bool report(std::string received, std::string approved) const override
+    {
+        return DefaultReporterFactory::getDefaultReporter()->report(received, approved);
     }
 };
 
@@ -1165,6 +1245,80 @@ public:
 
 #endif 
 
+ // ******************** From: DefaultFrontLoadedReporter.h
+#ifndef APPROVALTESTS_CPP_DEFAULTFRONTLOADEDREPORTER_H
+#define APPROVALTESTS_CPP_DEFAULTFRONTLOADEDREPORTER_H
+
+
+class DefaultFrontLoadedReporter : public Reporter
+{
+public:
+    virtual bool report(std::string received, std::string approved) const override
+    {
+        return false;
+    }
+};
+
+#endif 
+
+ // ******************** From: FrontLoadedReporterFactory.h
+#ifndef APPROVALTESTS_CPP_FRONTLOADEDREPORTERFACTORY_H
+#define APPROVALTESTS_CPP_FRONTLOADEDREPORTERFACTORY_H
+
+
+
+class FrontLoadedReporterFactory
+{
+    using ReporterContainer = std::vector< std::shared_ptr<Reporter> >;
+    APPROVAL_TESTS_MACROS_STATIC(ReporterContainer, frontLoadedReporterContainer, FrontLoadedReporterFactory::createReporterContainer())
+
+    static ReporterContainer* createReporterContainer()
+    {
+        auto container = new ReporterContainer;
+        container->push_back( std::make_shared<DefaultFrontLoadedReporter>());
+        return container;
+    }
+
+public:
+    static std::shared_ptr<Reporter> getFrontLoadedReporter()
+    {
+        return frontLoadedReporterContainer().at(0);
+    }
+
+    static void setFrontLoadedReporter( const std::shared_ptr<Reporter>& reporter)
+    {
+        frontLoadedReporterContainer().at(0) = reporter;
+    }
+};
+
+#endif 
+
+ // ******************** From: FrontLoadedReporterDisposer.h
+#ifndef APPROVALTESTS_CPP_FRONTLOADEDREPORTERDISPOSER_H
+#define APPROVALTESTS_CPP_FRONTLOADEDREPORTERDISPOSER_H
+
+
+class FrontLoadedReporterDisposer
+{
+private:
+    std::shared_ptr<Reporter> previous_result;
+public:
+    explicit FrontLoadedReporterDisposer(const std::shared_ptr<Reporter>& reporter)
+    {
+        previous_result = FrontLoadedReporterFactory::getFrontLoadedReporter();
+        FrontLoadedReporterFactory::setFrontLoadedReporter(reporter);
+    }
+
+    ~FrontLoadedReporterDisposer()
+    {
+        FrontLoadedReporterFactory::setFrontLoadedReporter(previous_result);
+    }
+
+};
+
+
+#endif 
+
  // ******************** From: ApprovalComparator.h
 #ifndef APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
 #define APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
@@ -1341,8 +1495,18 @@ public:
             s.cleanUpReceived(receivedPath);
         }
         catch (const ApprovalException&) {
-            r.report(receivedPath, approvedPath);
+            reportAfterTryingFrontLoadedReporter(receivedPath, approvedPath, r);
             throw;
+        }
+    }
+
+    static void
+    reportAfterTryingFrontLoadedReporter(const string &receivedPath, const string &approvedPath, const Reporter &r)
+    {
+        auto tryFirst = FrontLoadedReporterFactory::getFrontLoadedReporter();
+        if (!tryFirst->report(receivedPath, approvedPath))
+        {
+            r.report(receivedPath, approvedPath);
         }
     }
 
@@ -1458,6 +1622,11 @@ public:
     static DefaultReporterDisposer useAsDefaultReporter(const std::shared_ptr<Reporter>& reporter)
     {
         return DefaultReporterDisposer(reporter);
+    }
+
+    static FrontLoadedReporterDisposer useAsFrontLoadedReporter(const std::shared_ptr<Reporter>& reporter)
+    {
+        return FrontLoadedReporterDisposer(reporter);
     }
 
 };
@@ -2034,6 +2203,44 @@ public:
 OKRA_REGISTER_LISTENER(OkraApprovalListener);
 // </SingleHpp>
 #endif
+#endif 
+
+ // ******************** From: BlockingReporter.h
+#ifndef APPROVALTESTS_CPP_BLOCKINGREPORTER_H
+#define APPROVALTESTS_CPP_BLOCKINGREPORTER_H
+
+
+
+class BlockingReporter : public Reporter
+{
+private:
+    std::shared_ptr<Blocker> blocker;
+
+    BlockingReporter() = delete;
+
+public:
+    BlockingReporter( std::shared_ptr<Blocker> blocker ) : blocker(blocker)
+    {
+    }
+
+    static std::shared_ptr<BlockingReporter> onMachineNamed( const std::string& machineName )
+    {
+        auto machineBlocker = std::make_shared<MachineBlocker>( MachineBlocker::onMachineNamed(machineName) );
+        return std::make_shared<BlockingReporter>(machineBlocker);
+    }
+
+    static std::shared_ptr<BlockingReporter> onMachinesNotNamed( const std::string& machineName )
+    {
+        auto machineBlocker = std::make_shared<MachineBlocker>( MachineBlocker::onMachinesNotNamed(machineName) );
+        return std::make_shared<BlockingReporter>(machineBlocker);
+    }
+
+    virtual bool report(std::string received, std::string approved) const override
+    {
+        return blocker->isBlockingOnThisMachine();
+    }
+};
+
 #endif 
 
  // ******************** From: ClipboardReporter.h
