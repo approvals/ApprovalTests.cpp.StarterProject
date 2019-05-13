@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
 project(StarterProject.code CXX)
-set(SOURCE_FILES YourCodeGoesHere.h)
-add_library(StarterProject.code ${SOURCE_FILES} )
-
-set_target_properties(StarterProject.code PROPERTIES LINKER_LANGUAGE CXX)
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME}
+        INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/..)
