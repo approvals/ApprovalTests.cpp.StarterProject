@@ -1,4 +1,4 @@
-// Approval Tests version v.3.4.0
+// Approval Tests version v.3.4.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 #include <stdexcept>
 #include <string>
@@ -223,9 +223,44 @@ public:
 
 #endif 
 
+ // ******************** From: WinMinGWUtils.h
+#ifndef APPROVALTESTS_CPP_WINMINGWUTILS_H
+#define APPROVALTESTS_CPP_WINMINGWUTILS_H
+
+// <SingleHpp unalterable>
+
+#if (defined(__MINGW32__) || defined(__MINGW64__))
+#define APPROVAL_TESTS_MINGW
+#endif
+
+#ifdef APPROVAL_TESTS_MINGW
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <sec_api/stdlib_s.h> /* errno_t, size_t */
+
+errno_t getenv_s(
+    size_t     *ret_required_buf_size,
+    char       *buf,
+    size_t      buf_size_in_bytes,
+    const char *name
+);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // APPROVAL_TESTS_MINGW
+
+// </SingleHpp>
+
+#endif 
+
  // ******************** From: SystemUtils.h
 #ifndef APPROVALTESTS_CPP_SYSTEMUTILS_H
 #define APPROVALTESTS_CPP_SYSTEMUTILS_H
+
 // <SingleHpp unalterable>
 #ifdef _WIN32
     // ReSharper disable once CppUnusedIncludeDirective
@@ -346,7 +381,7 @@ public:
         {
             return name;
         }
-        
+
         return "Unknown Computer";
     }
 
@@ -365,6 +400,7 @@ public:
 
     static void makeDirectoryForNonWindows(std::string directory)
     {
+        APPROVAL_TESTS_UNUSED(directory);
 #ifndef _WIN32
         mode_t nMode = 0733; 
         int nError = mkdir(directory.c_str(),nMode);
