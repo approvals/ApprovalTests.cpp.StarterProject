@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.8)
-project(StarterProject.tests)
+set(TEST_NAME StarterProject.tests)
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_FILES
         main.cpp
         DemoTest.cpp
         NewTest.cpp
         Tutorial.cpp)
-add_executable(StarterProject.tests ${SOURCE_FILES} )
-add_test(NAME StarterProject.tests COMMAND StarterProject.tests)
+add_executable(${TEST_NAME} ${SOURCE_FILES})
+target_link_libraries(${TEST_NAME} StarterProject.code StarterProject.lib)
+add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
