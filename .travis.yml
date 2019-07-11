@@ -4,6 +4,10 @@
 sudo: required
 language: cpp
 
+# -------------------------------------------------------------------------
+# Linux gcc
+# -------------------------------------------------------------------------
+
 addons: &gcc48
   apt:
     sources:
@@ -46,12 +50,16 @@ addons: &gcc9
     packages:
       - g++-9
 
+# -------------------------------------------------------------------------
+# Linux clang
+# -------------------------------------------------------------------------
+
 addons: &clang5
   compiler: clang
   apt:
     packages:
       - clang-5.0
-      - libstdc++-6-dev
+      - libstdc++-8-dev
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-trusty-5.0
@@ -61,13 +69,18 @@ addons: &clang6
   apt:
     packages:
       - clang-6.0
-      - libstdc++-6-dev
+      - libstdc++-8-dev
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-trusty-6.0
 
 matrix:
   include:
+    
+    # -------------------------------------------------------------------------
+    # Linux gcc
+    # -------------------------------------------------------------------------
+
     # See https://github.com/approvals/ApprovalTests.cpp/issues/13 for fixing this build
     # - env: GCC_VERSION=4.8
     #   addons: *gcc48
@@ -92,15 +105,21 @@ matrix:
       os: linux
       addons: *gcc9
 
-#    # Fails to build: https://travis-ci.com/claremacrae/ApprovalTests.cpp/jobs/215192844
-#    - env: CLANG_VERSION=5.0
-#      os: linux
-#      addons: *clang5
-#
-#    # Fails to build: https://travis-ci.com/claremacrae/ApprovalTests.cpp/jobs/215192846
-#    - env: CLANG_VERSION=6.0
-#      os: linux
-#      addons: *clang6
+    # -------------------------------------------------------------------------
+    # Linux clang
+    # -------------------------------------------------------------------------
+
+    - env: CLANG_VERSION=5.0
+      os: linux
+      addons: *clang5
+
+    - env: CLANG_VERSION=6.0
+      os: linux
+      addons: *clang6
+
+    # -------------------------------------------------------------------------
+    # Mac clang
+    # -------------------------------------------------------------------------
 
     - os: osx
       osx_image: xcode8.3
