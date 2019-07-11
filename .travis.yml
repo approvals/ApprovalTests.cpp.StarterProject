@@ -56,7 +56,6 @@ addons: &gcc9
 
 addons: &clang5
   compiler: clang
-  dist: trusty
   apt:
     packages:
       - clang-5.0
@@ -67,7 +66,6 @@ addons: &clang5
 
 addons: &clang6
   compiler: clang
-  dist: trusty
   apt:
     packages:
       - clang-6.0
