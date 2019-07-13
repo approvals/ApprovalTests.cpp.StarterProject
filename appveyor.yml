@@ -1,9 +1,4 @@
-environment:
-  matrix:
-    # Based on idea in https://help.appveyor.com/discussions/questions/2985-question-regarding-build-matrices-and-visual-studio
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+image: Visual Studio 2017
 
 branches:
   except:
