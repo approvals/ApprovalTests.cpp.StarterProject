@@ -10,5 +10,5 @@ branches:
 build:
   project: visual-studio-2017/StarterProject.sln
 
-#test_script:
-#- cmd: ctest --verbose --parallel 4 -C Debug
+test_script:
+- cmd: visual-studio-2017\x64\Debug\StarterProject.exe
