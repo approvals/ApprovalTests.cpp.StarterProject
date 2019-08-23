@@ -13,6 +13,11 @@ Works on Mac, Linux and Windows.
 
 Feel free to copy and go...
 
+## Starting Point
+
+The tests in [NewTest](https://github.com/approvals/ApprovalTests.cpp.StarterProject/blob/master/tests/NewTest.cpp) should pass, and then you should delete/modify as needed to get started.
+
+
 Notes:
 
 * For more information, see the [ApprovalTests.cpp User Guide](https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/README.md#top)
