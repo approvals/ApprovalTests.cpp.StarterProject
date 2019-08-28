@@ -324,3 +324,5 @@ ASALocalRun/
 # MSBuild Binary and Structured Log
 *.binlog
 
+.DS_Store
+.idea/workspace.xml
