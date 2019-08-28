@@ -1,6 +1,8 @@
 #include "ApprovalTests.hpp"
 #include "Catch.hpp"
 
+using namespace ApprovalTests;
+
 // All these tests should pass on your system.
 // Please note that you will need a Diff Tool installed:
 //  https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/Reporters.md#supported-diff-tools

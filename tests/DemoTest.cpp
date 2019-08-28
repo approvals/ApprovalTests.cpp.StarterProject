@@ -2,6 +2,8 @@
 #include "Catch.hpp"
 #include <ostream>
 
+using namespace ApprovalTests;
+
 TEST_CASE("DemoSimpleTestCase")
 {
     Approvals::verify("Some\nMulti-line\noutput");
