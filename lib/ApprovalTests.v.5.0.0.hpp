@@ -1,19 +1,17 @@
-// Approval Tests version v.4.0.0
-// More information at: https://github.com/approvals/ApprovalTests.cpp
-#include <stdexcept>
-#include <string>
-#include <algorithm>
-#include <sstream>
+// Approval Tests version v.5.0.0n// More information at: https://github.com/approvals/ApprovalTests.cppn#include <string>
 #include <fstream>
+#include <stdexcept>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <algorithm>
+#include <sstream>
 #include <memory>
+#include <stack>
 #include <vector>
 #include <functional>
 #include <iostream>
 #include <stdlib.h>
 #include <numeric>
-#include <stack>
 #include <exception>
 #include <map>
 #include <ostream>
@@ -21,205 +19,14 @@
 #ifndef APPROVALTESTS_CPP_BLOCKER_H
 #define APPROVALTESTS_CPP_BLOCKER_H
 
+namespace ApprovalTests {
 class Blocker
 {
 public:
     virtual ~Blocker() = default;
     virtual bool isBlockingOnThisMachine() const = 0;
 };
-
-#endif 
-
- // ******************** From: Macros.h
-#ifndef APPROVALTESTS_CPP_MACROS_H
-#define APPROVALTESTS_CPP_MACROS_H
-
-
-
-#define APPROVAL_TESTS_MACROS_STATIC(type, name, defaultValue) \
-static type &name(type *value = NULL) { \
-    static type *staticValue; \
-    if (value != NULL) \
-    { \
-        staticValue = value; \
-    } \
-    if (staticValue == NULL) \
-    { \
-        staticValue = defaultValue; \
-    } \
-    if ( staticValue == nullptr ) \
-    { \
-        const char* helpMessage = "The variable in " #name "() is not initialised"; \
-        throw std::runtime_error( helpMessage ); \
-    } \
-    return *staticValue; \
 }
-
-
-
-
-#define APPROVAL_TESTS_UNUSED(expr) do { (void)(expr); } while (0)
-
-
-
-#endif 
-
- // ******************** From: StringUtils.h
-
-
-#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
-#define APPROVALTESTS_CPP_STRINGUTILS_H
-
-
-class StringUtils
-{
-public:
-    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
-        size_t start_pos = 0;
-        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
-            inText.replace(start_pos, find.length(), replaceWith);
-            start_pos += replaceWith.length(); 
-        }
-        return inText;
-    }
-
-    static bool contains(std::string inText, const std::string& find)
-    {
-        return inText.find(find, 0) != std::string::npos;
-    }
-
-    static std::string toLower(std::string inText)
-    {
-        std::string copy(inText);
-        std::transform(inText.begin(), inText.end(), copy.begin(),
-          [](char c){ return static_cast<char>(::tolower(c)); });
-        return copy;
-    }
-    
-    static bool endsWith(std::string value, std::string ending)
-    {
-        if (ending.size() > value.size())
-        {
-            return false;
-        }
-        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-    }
-
-    template<typename T>
-    static std::string toString(const T& contents)
-    {
-        std::stringstream s;
-        s << contents;
-        return s.str();
-    }
-
-};
-#endif 
-
- // ******************** From: ApprovalWriter.h
-#ifndef APPROVALTESTS_CPP_APPROVALWRITER_H
-#define APPROVALTESTS_CPP_APPROVALWRITER_H
-
-class ApprovalWriter
-{
-public:
-    virtual std::string getFileExtensionWithDot() = 0;
-    virtual void write(std::string path) = 0;
-    virtual void cleanUpReceived(std::string receivedPath) = 0;
-};
-
-#endif 
-
- // ******************** From: StringWriter.h
-#ifndef APPROVALTESTS_CPP_STRINGWRITER_H
-#define APPROVALTESTS_CPP_STRINGWRITER_H
-
-
-class StringWriter : public ApprovalWriter
-{
-private:
-    std::string s;
-    std::string ext;
-
-public:
-    StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
-        : s( contents ), ext( fileExtensionWithDot ) {}
-
-    std::string getFileExtensionWithDot() override
-    {
-        return ext;
-    }
-
-    void write( std::string path ) override
-    {
-        std::ofstream out( path.c_str(), std::ofstream::out );
-        if ( ! out)
-        {
-            throw std::runtime_error("Unable to write file: " + path);
-        }
-        this->Write( out );
-        out.close();
-    }
-
-    void Write( std::ostream &out )
-    {
-        out << s << "\n";
-    }
-
-    virtual void cleanUpReceived(std::string receivedPath) override {
-        remove(receivedPath.c_str());
-    }
-
-
-};
-#endif
-
- // ******************** From: FileUtils.h
-
-
-
-
-#ifndef APPROVALTESTS_CPP_FILEUTILS_H
-#define APPROVALTESTS_CPP_FILEUTILS_H
-
-
-class FileUtils {
-public:
-    static bool fileExists(std::string path)
-    {
-        struct stat info;
-        return stat( path.c_str(), &info ) == 0;
-    }
-
-    static int fileSize(std::string path) {
-        struct stat statbuf;
-        int stat_ok = stat(path.c_str(), &statbuf);
-
-        if (stat_ok == -1) {
-            return -1;
-        }
-
-        return int(statbuf.st_size);
-    }
-
-    static void ensureFileExists(std::string fullFilePath) {
-        if (!fileExists(fullFilePath)) {
-            StringWriter s("", "");
-            s.write(fullFilePath);
-        }
-    }
-
-    static std::string getExtensionWithDot(std::string filePath) {
-        std::size_t found = filePath.find_last_of(".");
-        return filePath.substr(found);
-    }
-
-    static void writeToFile(std::string filePath, std::string content)
-    {
-        std::ofstream out(filePath.c_str(), std::ios::binary | std::ofstream::out);
-        out << content;
-    }
-};
 
 #endif 
 
@@ -257,6 +64,218 @@ errno_t getenv_s(
 
 #endif 
 
+ // ******************** From: ApprovalWriter.h
+#ifndef APPROVALTESTS_CPP_APPROVALWRITER_H
+#define APPROVALTESTS_CPP_APPROVALWRITER_H
+
+namespace ApprovalTests {
+class ApprovalWriter
+{
+public:
+    virtual ~ApprovalWriter() = default;
+    virtual std::string getFileExtensionWithDot() const = 0;
+    virtual void write(std::string path) const = 0;
+    virtual void cleanUpReceived(std::string receivedPath) const = 0;
+};
+}
+
+#endif 
+
+ // ******************** From: StringWriter.h
+#ifndef APPROVALTESTS_CPP_STRINGWRITER_H
+#define APPROVALTESTS_CPP_STRINGWRITER_H
+
+
+namespace ApprovalTests {
+class StringWriter : public ApprovalWriter
+{
+private:
+    std::string s;
+    std::string ext;
+
+public:
+    StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
+        : s( contents ), ext( fileExtensionWithDot ) {}
+
+    std::string getFileExtensionWithDot() const override
+    {
+        return ext;
+    }
+
+    void write( std::string path ) const override
+    {
+        std::ofstream out( path.c_str(), std::ofstream::out );
+        if ( ! out)
+        {
+            throw std::runtime_error("Unable to write file: " + path);
+        }
+        this->Write( out );
+        out.close();
+    }
+
+    void Write( std::ostream &out ) const
+    {
+        out << s << "\n";
+    }
+
+    virtual void cleanUpReceived(std::string receivedPath) const override {
+        remove(receivedPath.c_str());
+    }
+
+
+};
+}
+#endif
+
+ // ******************** From: FileUtils.h
+
+
+
+
+#ifndef APPROVALTESTS_CPP_FILEUTILS_H
+#define APPROVALTESTS_CPP_FILEUTILS_H
+
+
+namespace ApprovalTests {
+class FileUtils {
+public:
+    static bool fileExists(std::string path)
+    {
+        struct stat info;
+        return stat( path.c_str(), &info ) == 0;
+    }
+
+    static int fileSize(std::string path) {
+        struct stat statbuf;
+        int stat_ok = stat(path.c_str(), &statbuf);
+
+        if (stat_ok == -1) {
+            return -1;
+        }
+
+        return int(statbuf.st_size);
+    }
+
+    static void ensureFileExists(std::string fullFilePath) {
+        if (!fileExists(fullFilePath)) {
+            StringWriter s("", "");
+            s.write(fullFilePath);
+        }
+    }
+
+    static std::string getExtensionWithDot(std::string filePath) {
+        std::size_t found = filePath.find_last_of('.');
+        return filePath.substr(found);
+    }
+
+    static void writeToFile(std::string filePath, std::string content)
+    {
+        std::ofstream out(filePath.c_str(), std::ios::binary | std::ofstream::out);
+        if ( ! out)
+        {
+            throw std::runtime_error("Unable to write file: " + filePath);
+        }
+        out << content;
+    }
+};
+}
+
+#endif 
+
+ // ******************** From: StringUtils.h
+
+
+#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
+#define APPROVALTESTS_CPP_STRINGUTILS_H
+
+
+namespace ApprovalTests {
+class StringUtils
+{
+public:
+    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
+        size_t start_pos = 0;
+        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
+            inText.replace(start_pos, find.length(), replaceWith);
+            start_pos += replaceWith.length(); 
+        }
+        return inText;
+    }
+
+    static bool contains(std::string inText, const std::string& find)
+    {
+        return inText.find(find, 0) != std::string::npos;
+    }
+
+    static std::string toLower(std::string inText)
+    {
+        std::string copy(inText);
+        std::transform(inText.begin(), inText.end(), copy.begin(),
+          [](char c){ return static_cast<char>(tolower(c)); });
+        return copy;
+    }
+
+    static bool endsWith(std::string value, std::string ending)
+    {
+        if (ending.size() > value.size())
+        {
+            return false;
+        }
+        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+    }
+
+    template<typename T>
+    static std::string toString(const T& contents)
+    {
+        std::stringstream s;
+        s << contents;
+        return s.str();
+    }
+
+};
+}
+#endif 
+
+ // ******************** From: Macros.h
+#ifndef APPROVALTESTS_CPP_MACROS_H
+#define APPROVALTESTS_CPP_MACROS_H
+
+
+
+#define APPROVAL_TESTS_MACROS_STATIC(type, name, defaultValue) \
+static type &name(type *value = NULL) { \
+    static type *staticValue; \
+    if (value != NULL) \
+    { \
+        staticValue = value; \
+    } \
+    if (staticValue == NULL) \
+    { \
+        staticValue = defaultValue; \
+    } \
+    if ( staticValue == nullptr ) \
+    { \
+        const char* helpMessage = "The variable in " #name "() is not initialised"; \
+        throw std::runtime_error( helpMessage ); \
+    } \
+    return *staticValue; \
+}
+
+
+
+
+#define APPROVAL_TESTS_UNUSED(expr) do { (void)(expr); } while (0)
+
+#if __cplusplus >= 201703L
+    #define APPROVAL_TESTS_NO_DISCARD [[nodiscard]]
+#else
+    #define APPROVAL_TESTS_NO_DISCARD
+#endif
+
+
+
+#endif 
+
  // ******************** From: SystemUtils.h
 #ifndef APPROVALTESTS_CPP_SYSTEMUTILS_H
 #define APPROVALTESTS_CPP_SYSTEMUTILS_H
@@ -275,6 +294,7 @@ errno_t getenv_s(
 
 
 
+namespace ApprovalTests {
 class SystemUtils
 {
 public:
@@ -287,7 +307,7 @@ public:
 #endif
 
     }
-    
+
     static bool isCygwin()
     {
 #ifdef __CYGWIN__
@@ -317,7 +337,7 @@ public:
         if (hFind != INVALID_HANDLE_VALUE)
         {
             const std::string fixedFilename = findFileData.cFileName;
-            const std::string fixedPath = 
+            const std::string fixedPath =
                 StringUtils::replaceAll( fullPath, StringUtils::toLower(fixedFilename), fixedFilename );
             FindClose(hFind);
             return fixedPath;
@@ -367,7 +387,7 @@ public:
     {
         return isWindowsOs() ? safeGetEnvForWindows(name) : safeGetEnvForNonWindows(name);
     }
-    
+
     static std::string getMachineName()
     {
         auto name = safeGetEnv("COMPUTERNAME");
@@ -426,6 +446,7 @@ public:
         }
     }
 };
+}
 #endif
 
  // ******************** From: MachineBlocker.h
@@ -434,6 +455,7 @@ public:
 
 
 
+namespace ApprovalTests {
 class MachineBlocker : public Blocker
 {
 private:
@@ -463,7 +485,7 @@ public:
         return isMachine == block;
     }
 };
-
+}
 
 #endif 
 
@@ -472,6 +494,7 @@ public:
 #define APPROVALTESTS_CPP_FILEUTILSSYSTEMSPECIFIC_H
 
 
+namespace ApprovalTests {
 class FileUtilsSystemSpecific
 {
 public:
@@ -489,6 +512,7 @@ public:
         system( getCommandLineForCopy(source, destination, SystemUtils::isWindowsOs()).c_str() );
     }
 };
+}
 #endif
 
  // ******************** From: Reporter.h
@@ -496,12 +520,18 @@ public:
 #define APPROVALTESTS_CPP_REPORTER_H
 
 
+namespace ApprovalTests {
 
 class Reporter {
 public:
     virtual ~Reporter() = default;
     virtual bool report(std::string received, std::string approved) const = 0;
 };
+
+
+template<typename T>
+using IsNotDerivedFromReporter = typename std::enable_if<!std::is_base_of<Reporter, T>::value, int>::type;
+}
 
 #endif
 
@@ -510,6 +540,7 @@ public:
 #define APPROVALTESTS_CPP_AUTOAPPROVEREPORTER_H
 
 
+namespace ApprovalTests {
 class AutoApproveReporter : public Reporter
 {
 public:
@@ -520,8 +551,218 @@ public:
         return true;
     }
 };
+}
 
 #endif
+
+ // ******************** From: ApprovalNamer.h
+#ifndef APPROVALTESTS_CPP_APPROVALNAMER_H
+#define APPROVALTESTS_CPP_APPROVALNAMER_H
+
+
+namespace ApprovalTests {
+class ApprovalNamer
+{
+public:
+    virtual ~ApprovalNamer() = default;
+    virtual std::string getApprovedFile(std::string extensionWithDot) const = 0;
+    virtual std::string getReceivedFile(std::string extensionWithDot) const = 0;
+
+};
+}
+
+#endif
+
+ // ******************** From: ApprovalTestNamer.h
+#ifndef APPROVALTESTS_CPP_APPROVALTESTNAMER_H
+#define APPROVALTESTS_CPP_APPROVALTESTNAMER_H
+
+
+namespace ApprovalTests {
+class TestName {
+public:
+    const std::string& getFileName() const {
+        return fileName;
+    }
+
+    void setFileName(const std::string &file) {
+        fileName = SystemUtils::checkFilenameCase(file);
+    }
+
+    std::vector<std::string> sections;
+private:
+    std::string fileName;
+};
+
+class TestConfiguration {
+public:
+    std::string subdirectory;
+};
+
+class ApprovalTestNamer : public ApprovalNamer {
+private:
+public:
+    ApprovalTestNamer() = default;
+
+    std::string getTestName() const {
+        std::stringstream ext;
+        auto test = getCurrentTest();
+        for (size_t i = 0; i < test.sections.size(); i++) {
+            if (0 < i) {
+                ext << ".";
+            }
+            ext << test.sections[i];
+        }
+
+        return convertToFileName(ext.str());
+    }
+
+    static bool isForbidden(char c)
+    {
+        static std::string forbiddenChars("\\/:?\"<>|' ");
+        return std::string::npos != forbiddenChars.find(c);
+    }
+
+    static std::string convertToFileName(const std::string& fileName)
+    {
+        std::stringstream result;
+        for (auto ch : fileName)
+        {
+            if (!isForbidden(ch))
+            {
+                result << ch;
+            }
+            else
+            {
+                result << "_";
+            }
+        }
+        return result.str();
+    }
+
+// <SingleHpp unalterable>
+    static TestName &getCurrentTest()
+    {
+        try
+        {
+            return currentTest();
+        }
+        catch( const std::runtime_error& )
+        {
+            std::string lineBreak = "************************************************************************************n";
+            std::string lineBuffer = "*                                                                                  *n";
+            std::string helpMessage =
+                "nn" + lineBreak + lineBuffer + 
+R"(* Welcome to Approval Tests.
+* 
+* You have forgotten to configure your test framework for Approval Tests.
+* 
+* To do this in Catch, add the following to your main.cpp:
+* 
+*     #define APPROVALS_CATCH
+*     #include "ApprovalTests.hpp"
+* 
+* To do this in Google Test, add the following to your main.cpp:
+* 
+*     #define APPROVALS_GOOGLETEST
+*     #include "ApprovalTests.hpp"
+* 
+* To do this in doctest, add the following to your main.cpp:
+* 
+*     #define APPROVALS_DOCTEST
+*     #include "ApprovalTests.hpp"
+* 
+* For more information, please visit:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
+)" +
+                    lineBuffer + lineBreak + 'n';
+            throw std::runtime_error( helpMessage );
+        }
+    }
+// </SingleHpp>
+
+
+    
+    std::string getFileName() const {
+        return getSourceFileName();
+    }
+
+
+    std::string getSourceFileName() const {
+        auto file = getCurrentTest().getFileName();
+        auto start = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
+        auto end = file.rfind('.');
+        auto fileName = file.substr(start, end - start);
+        return convertToFileName(fileName);
+    }
+
+    std::string getDirectory() const {
+        auto file = getCurrentTest().getFileName();
+        auto end = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
+        auto directory = file.substr(0, end);
+        if ( ! testConfiguration().subdirectory.empty() )
+        {
+            directory += testConfiguration().subdirectory + SystemUtils::getDirectorySeparator();
+            SystemUtils::ensureDirectoryExists(directory);
+        }
+        return directory;
+    }
+
+    APPROVAL_TESTS_MACROS_STATIC(TestName, currentTest, NULL)
+    APPROVAL_TESTS_MACROS_STATIC(TestConfiguration, testConfiguration, new TestConfiguration)
+
+    virtual std::string getApprovedFile(std::string extensionWithDot) const override {
+
+        return getFullFileName(".approved", extensionWithDot);
+    }
+
+    virtual std::string getReceivedFile(std::string extensionWithDot) const override {
+
+        return getFullFileName(".received", extensionWithDot);
+    }
+
+    std::string getOutputFileBaseName() const {
+        return getSourceFileName() + "." + getTestName();
+    }
+
+    std::string getFullFileName(std::string approved, std::string extensionWithDot) const {
+        std::stringstream ext;
+        ext << getDirectory() << getOutputFileBaseName() << approved << extensionWithDot;
+        return ext.str();
+    }
+};
+}
+
+#endif
+
+ // ******************** From: SectionNameDisposer.h
+#ifndef APPROVALTESTS_CPP_SECTIONNAMEDISPOSER_H
+#define APPROVALTESTS_CPP_SECTIONNAMEDISPOSER_H
+
+
+namespace ApprovalTests {
+class APPROVAL_TESTS_NO_DISCARD SectionNameDisposer
+{
+public:
+    SectionNameDisposer(TestName& currentTest, const std::string& scope_name) :
+        currentTest(currentTest)
+    {
+        
+        
+        currentTest.sections.push_back(scope_name);
+    }
+
+    ~SectionNameDisposer()
+    {
+        
+        currentTest.sections.pop_back();
+    }
+private:
+    TestName& currentTest;
+};
+}
+
+#endif 
 
  // ******************** From: GoogleCustomizationsFactory.h
 #ifndef APPROVALTESTS_CPP_GOOGLECUSTOMIZATIONSFACTORY_H
@@ -529,6 +770,7 @@ public:
 
 
 
+namespace ApprovalTests {
 class GoogleCustomizationsFactory
 {
 public:
@@ -555,7 +797,7 @@ public:
         return comparatorContainer();
     }
 
-    static bool addTestCaseNameRedundancyCheck(Comparator comparator)
+    APPROVAL_TESTS_NO_DISCARD static bool addTestCaseNameRedundancyCheck(Comparator comparator)
     {
         comparatorContainer().push_back(comparator);
         return true;
@@ -563,6 +805,7 @@ public:
     
 
 };
+}
 
 #endif 
 
@@ -572,20 +815,23 @@ public:
 
 
 
+namespace ApprovalTests {
 class ExistingFile : public ApprovalWriter{
     std::string filePath;
 public:
     ExistingFile(std::string filePath) : filePath(filePath){}
-    virtual std::string getFileExtensionWithDot() override {
+    virtual std::string getFileExtensionWithDot() const override {
         return FileUtils::getExtensionWithDot(filePath);
     }
-    virtual void write(std::string ) override {
+    virtual void write(std::string ) const override {
         
     }
-    virtual void cleanUpReceived(std::string ) override {
+    virtual void cleanUpReceived(std::string ) const override {
         
     }
 };
+}
+
 #endif
 
  // ******************** From: CommandLauncher.h
@@ -593,48 +839,17 @@ public:
 #define APPROVALTESTS_CPP_COMMANDLAUNCHER_H
 
 
+namespace ApprovalTests {
 
 class CommandLauncher
 {
 public:
-    virtual ~CommandLauncher() {}
+    virtual ~CommandLauncher() = default;
     virtual bool launch(std::vector<std::string> argv) = 0;
 };
+}
 
 #endif  
-
- // ******************** From: CommandReporter.h
-#ifndef APPROVALTESTS_CPP_COMMANDREPORTER_H
-#define APPROVALTESTS_CPP_COMMANDREPORTER_H
-
-
-
-class CommandReporter : public Reporter {
-private:
-    std::string cmd;
-    CommandLauncher *l;
-
-protected:
-    CommandReporter(std::string command, CommandLauncher *launcher)
-            : cmd(command), l(launcher) {
-    }
-
-public:
-    bool report(std::string received, std::string approved) const override {
-        FileUtils::ensureFileExists(approved);
-        return l->launch(getFullCommand(received, approved));
-    }
-
-    std::vector<std::string> getFullCommand(const std::string &received, const std::string &approved) const
-    {
-        std::vector<std::string> fullCommand;
-        fullCommand.push_back(cmd);
-        fullCommand.push_back(received);
-        fullCommand.push_back(approved);
-        return fullCommand;
-    }
-};
-#endif 
 
  // ******************** From: SystemLauncher.h
 
@@ -642,6 +857,7 @@ public:
 #define APPROVALTESTS_CPP_SYSTEMLAUNCHER_H
 
 
+namespace ApprovalTests {
 typedef std::vector<std::string> (*ConvertArgumentsFunctionPointer)(std::vector<std::string>);
 
 class SystemLauncher : public CommandLauncher
@@ -690,12 +906,48 @@ public:
         argv = convertArgumentsForSystemLaunching(argv);
 
         std::string command = std::accumulate(argv.begin(), argv.end(), std::string(""), [](std::string a, std::string b) {return a + " " + "\"" + b + "\""; });
-        std::string launch = SystemUtils::isWindowsOs() ? ("start \"\" " +  command) :  (command + " &");
+        std::string launch = SystemUtils::isWindowsOs() ? ("start \"\" " + command) : (command + " &");
         system(launch.c_str());
         return true;
     }
 };
+}
 
+#endif 
+
+ // ******************** From: CommandReporter.h
+#ifndef APPROVALTESTS_CPP_COMMANDREPORTER_H
+#define APPROVALTESTS_CPP_COMMANDREPORTER_H
+
+
+namespace ApprovalTests {
+
+class CommandReporter : public Reporter {
+private:
+    std::string cmd;
+    CommandLauncher *l;
+
+protected:
+    CommandReporter(std::string command, CommandLauncher *launcher)
+            : cmd(command), l(launcher) {
+    }
+
+public:
+    bool report(std::string received, std::string approved) const override {
+        FileUtils::ensureFileExists(approved);
+        return l->launch(getFullCommand(received, approved));
+    }
+
+    std::vector<std::string> getFullCommand(const std::string &received, const std::string &approved) const
+    {
+        std::vector<std::string> fullCommand;
+        fullCommand.push_back(cmd);
+        fullCommand.push_back(received);
+        fullCommand.push_back(approved);
+        return fullCommand;
+    }
+};
+}
 #endif 
 
  // ******************** From: DiffInfo.h
@@ -703,6 +955,7 @@ public:
 #define APPROVALTESTS_CPP_DIFFINFO_H
 
 
+namespace ApprovalTests {
 enum class Type { TEXT, IMAGE, TEXT_AND_IMAGE };
 
 
@@ -756,7 +1009,7 @@ struct DiffInfo
         return result;
     }
 };
-
+}
 
 #endif 
 
@@ -770,6 +1023,7 @@ struct DiffInfo
         static DiffInfo name() { return defaultValue; }
 
 
+namespace ApprovalTests {
 namespace DiffPrograms {
 
 
@@ -816,6 +1070,7 @@ namespace DiffPrograms {
 
     }
 }
+}
 
 #endif 
 
@@ -824,6 +1079,7 @@ namespace DiffPrograms {
 #define APPROVALTESTS_CPP_GENERICDIFFREPORTER_H
 
 
+namespace ApprovalTests {
 class GenericDiffReporter : public CommandReporter {
 private:
     SystemLauncher launcher;
@@ -866,6 +1122,7 @@ public:
         return copy;
     }
 };
+}
 
 #endif 
 
@@ -874,6 +1131,7 @@ public:
 #define APPROVALTESTS_CPP_FIRSTWORKINGREPORTER_H
 
 
+namespace ApprovalTests {
 class FirstWorkingReporter : public Reporter
 {
 private:
@@ -900,6 +1158,7 @@ public:
         return false;
     }
 };
+}
 
 #endif 
 
@@ -908,6 +1167,7 @@ public:
 #define APPROVALTESTS_CPP_LINUXREPORTERS_H
 
 
+namespace ApprovalTests {
 namespace Linux
 {
     class KDiff3Reporter : public GenericDiffReporter {
@@ -936,6 +1196,7 @@ namespace Linux
     };
 
 }
+}
 
 #endif 
 
@@ -944,6 +1205,7 @@ namespace Linux
 #define APPROVALTESTS_CPP_MACREPORTERS_H
 
 
+namespace ApprovalTests {
 namespace Mac {
     class DiffMergeReporter : public GenericDiffReporter {
     public:
@@ -998,6 +1260,7 @@ namespace Mac {
         }
     };
 }
+}
 
 #endif 
 
@@ -1006,6 +1269,7 @@ namespace Mac {
 #define APPROVALTESTS_CPP_WINDOWSREPORTERS_H
 
 
+namespace ApprovalTests {
 namespace Windows {
     class BeyondCompare3Reporter : public GenericDiffReporter {
     public:
@@ -1083,6 +1347,7 @@ namespace Windows {
         }
     };
 }
+}
 
 #endif 
 
@@ -1091,6 +1356,7 @@ namespace Windows {
 #define APPROVALTESTS_CPP_DIFFREPORTER_H
 
 
+namespace ApprovalTests {
 class DiffReporter : public FirstWorkingReporter
 {
 public:
@@ -1104,6 +1370,7 @@ public:
     {
     }
 };
+}
 
 #endif 
 
@@ -1113,6 +1380,7 @@ public:
 
 
 
+namespace ApprovalTests {
 
 class DefaultReporterFactory
 {
@@ -1139,6 +1407,7 @@ public:
     }
 
 };
+}
 
 #endif 
 
@@ -1147,8 +1416,9 @@ public:
 #define APPROVALTESTS_CPP_DEFAULTREPORTERDISPOSER_H
 
 
+namespace ApprovalTests {
 
-class DefaultReporterDisposer
+class APPROVAL_TESTS_NO_DISCARD DefaultReporterDisposer
 {
 private:
     std::shared_ptr<Reporter> previous_result;
@@ -1164,6 +1434,7 @@ public:
         DefaultReporterFactory::setDefaultReporter(previous_result);
     }
 };
+}
 
 #endif 
 
@@ -1173,6 +1444,7 @@ public:
 
 
 
+namespace ApprovalTests {
 class DefaultReporter : public Reporter
 {
 public:
@@ -1181,189 +1453,9 @@ public:
         return DefaultReporterFactory::getDefaultReporter()->report(received, approved);
     }
 };
+}
 
 #endif 
-
- // ******************** From: ApprovalNamer.h
-#ifndef APPROVALTESTS_CPP_APPROVALNAMER_H
-#define APPROVALTESTS_CPP_APPROVALNAMER_H
-
-
-using std::string;
-
-class ApprovalNamer
-{
-public:
-    virtual ~ApprovalNamer() = default;
-    virtual string getApprovedFile(string extensionWithDot) = 0;
-    virtual string getReceivedFile(string extensionWithDot) = 0;
-
-};
-
-#endif
-
- // ******************** From: ApprovalTestNamer.h
-#ifndef APPROVALTESTS_CPP_APPROVALTESTNAMER_H
-#define APPROVALTESTS_CPP_APPROVALTESTNAMER_H
-
-
-using std::string;
-
-class TestName {
-public:
-    const string& getFileName() const {
-        return fileName;
-    }
-
-    void setFileName(const string &file) {
-        fileName = SystemUtils::checkFilenameCase(file);
-    }
-
-    std::vector<string> sections;
-private:
-    string fileName;
-};
-
-class TestConfiguration {
-public:
-    std::string subdirectory;
-};
-
-class ApprovalTestNamer : public ApprovalNamer {
-private:
-public:
-    ApprovalTestNamer() {
-    }
-
-    std::string getTestName() const {
-        std::stringstream ext;
-        auto test = getCurrentTest();
-        for (size_t i = 0; i < test.sections.size(); i++) {
-            if (0 < i) {
-                ext << ".";
-            }
-            ext << test.sections[i];
-        }
-
-        return convertToFileName(ext.str());
-    }
-
-    static bool isForbidden(char c)
-    {
-        static std::string forbiddenChars("\\/:?\"<>|' ");
-        return std::string::npos != forbiddenChars.find(c);
-    }
-
-    static string convertToFileName(const string& fileName)
-    {
-        std::stringstream result;
-        for (auto ch : fileName)
-        {
-            if (!isForbidden(ch))
-            {
-                result << ch;
-            }
-            else
-            {
-                result << "_";
-            }
-        }
-        return result.str();
-    }
-
-// <SingleHpp unalterable>
-    static TestName &getCurrentTest()
-    {
-        try
-        {
-            return currentTest();
-        }
-        catch( const std::runtime_error& )
-        {
-            std::string lineBreak = "************************************************************************************n";
-            std::string lineBuffer = "*                                                                                  *n";
-            std::string helpMessage =
-                "nn" + lineBreak + lineBuffer + 
-R"(* Welcome to Approval Tests.
-* 
-* You have forgotten to configure your test framework for Approval Tests.
-* 
-* To do this in Catch, add the following to your main.cpp:
-* 
-*     #define APPROVALS_CATCH
-*     #include "ApprovalTests.hpp"
-* 
-* To do this in Google Test, add the following to your main.cpp:
-* 
-*     #define APPROVALS_GOOGLETEST
-*     #include "ApprovalTests.hpp"
-* 
-* To do this in doctest, add the following to your main.cpp:
-* 
-*     #define APPROVALS_DOCTEST
-*     #include "ApprovalTests.hpp"
-* 
-* For more information, please visit:
-* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
-)" +
-                    lineBuffer + lineBreak + 'n';
-            throw std::runtime_error( helpMessage );
-        }
-    }
-// </SingleHpp>
-
-
-    
-    string getFileName() {
-        return getSourceFileName();
-    }
-
-
-    std::string getSourceFileName() const {
-        auto file = getCurrentTest().getFileName();
-        auto start = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
-        auto end = file.rfind(".");
-        auto fileName = file.substr(start, end - start);
-        return convertToFileName(fileName);
-    }
-
-    string getDirectory() {
-        auto file = getCurrentTest().getFileName();
-        auto end = file.rfind(SystemUtils::getDirectorySeparator()) + 1;
-        auto directory = file.substr(0, end);
-        if ( ! testConfiguration().subdirectory.empty() )
-        {
-            directory += testConfiguration().subdirectory + SystemUtils::getDirectorySeparator(); 
-            SystemUtils::ensureDirectoryExists(directory);
-        }
-        return directory;
-    }
-
-    APPROVAL_TESTS_MACROS_STATIC(TestName, currentTest, NULL)
-    APPROVAL_TESTS_MACROS_STATIC(TestConfiguration, testConfiguration, new TestConfiguration)
-
-    virtual string getApprovedFile(string extensionWithDot) {
-
-        return getFullFileName(".approved", extensionWithDot);
-    }
-
-    virtual string getReceivedFile(string extensionWithDot) {
-
-        return getFullFileName(".received", extensionWithDot);
-    }
-
-    std::string getOutputFileBaseName() const {
-        return getSourceFileName() + "." + getTestName();
-    }
-
-    std::string getFullFileName(string approved, string extensionWithDot) {
-        std::stringstream ext;
-        ext << getDirectory() << getOutputFileBaseName() << approved << extensionWithDot;
-        return ext.str();
-    }
-};
-
-#endif
 
  // ******************** From: SubdirectoryDisposer.h
 #ifndef APPROVALTESTS_CPP_SUBDIRECTORYDISPOSER_H
@@ -1371,8 +1463,9 @@ R"(* Welcome to Approval Tests.
 
 
 
+namespace ApprovalTests {
 
-class SubdirectoryDisposer
+class APPROVAL_TESTS_NO_DISCARD SubdirectoryDisposer
 {
 private:
     std::string previous_result;
@@ -1388,6 +1481,47 @@ public:
         ApprovalTestNamer::testConfiguration().subdirectory = previous_result;
     }
 };
+}
+
+#endif 
+
+ // ******************** From: DefaultNamerFactory.h
+#ifndef APPROVALTESTS_CPP_DEFAULTNAMERFACTORY_H
+#define APPROVALTESTS_CPP_DEFAULTNAMERFACTORY_H
+
+
+
+namespace ApprovalTests {
+
+typedef std::function<std::shared_ptr<ApprovalNamer>()> NamerCreator;
+
+
+class DefaultNamerFactory
+{
+private:
+    using NamerContainer = std::vector< NamerCreator >;
+    APPROVAL_TESTS_MACROS_STATIC(NamerContainer, defaultNamerContainer, DefaultNamerFactory::createNamerContainer())
+    
+    static NamerContainer* createNamerContainer()
+    {
+        auto container = new NamerContainer; 
+        container->push_back( [](){return std::make_shared<ApprovalTestNamer>();} );
+        return container;
+    }
+
+public:
+    static NamerCreator getDefaultNamer()
+    {
+        return defaultNamerContainer().at(0);
+    }
+    
+    static void setDefaultNamer( NamerCreator namer)
+    {
+        defaultNamerContainer().at(0) = namer;
+    }
+
+};
+}
 
 #endif 
 
@@ -1396,21 +1530,49 @@ public:
 #define APPROVALTESTS_CPP_EXISTINGFILENAMER_H
 
 
+namespace ApprovalTests {
 class ExistingFileNamer: public ApprovalNamer{
-    ApprovalTestNamer namer;
     std::string filePath;
 public:
     ExistingFileNamer(std::string filePath): filePath(filePath){
 
     }
-    virtual string getApprovedFile(string extensionWithDot) {
-        return namer.getApprovedFile(extensionWithDot);
+    virtual std::string getApprovedFile(std::string extensionWithDot) const override {
+        return DefaultNamerFactory::getDefaultNamer()()->getApprovedFile(extensionWithDot);
     }
-    virtual string getReceivedFile(string ) {
+    virtual std::string getReceivedFile(std::string ) const override {
         return filePath;
     }
 
 };
+}
+
+#endif 
+
+ // ******************** From: DefaultNamerDisposer.h
+#ifndef APPROVALTESTS_CPP_DEFAULTNAMERDISPOSER_H
+#define APPROVALTESTS_CPP_DEFAULTNAMERDISPOSER_H
+
+
+namespace ApprovalTests {
+
+class APPROVAL_TESTS_NO_DISCARD DefaultNamerDisposer
+{
+private:
+    NamerCreator previous_result;
+public:
+    explicit DefaultNamerDisposer(NamerCreator namerCreator)
+    {
+        previous_result = DefaultNamerFactory::getDefaultNamer();
+        DefaultNamerFactory::setDefaultNamer(namerCreator);
+    }
+
+    ~DefaultNamerDisposer()
+    {
+        DefaultNamerFactory::setDefaultNamer(previous_result);
+    }
+};
+}
 
 #endif 
 
@@ -1419,6 +1581,7 @@ public:
 #define APPROVALTESTS_CPP_DEFAULTFRONTLOADEDREPORTER_H
 
 
+namespace ApprovalTests {
 
 class DefaultFrontLoadedReporter : public Reporter
 {
@@ -1428,6 +1591,7 @@ public:
         return false;
     }
 };
+}
 
 #endif 
 
@@ -1437,6 +1601,7 @@ public:
 
 
 
+namespace ApprovalTests {
 
 class FrontLoadedReporterFactory
 {
@@ -1461,6 +1626,7 @@ public:
         frontLoadedReporterContainer().at(0) = reporter;
     }
 };
+}
 
 #endif 
 
@@ -1469,8 +1635,9 @@ public:
 #define APPROVALTESTS_CPP_FRONTLOADEDREPORTERDISPOSER_H
 
 
+namespace ApprovalTests {
 
-class FrontLoadedReporterDisposer
+class APPROVAL_TESTS_NO_DISCARD FrontLoadedReporterDisposer
 {
 private:
     std::shared_ptr<Reporter> previous_result;
@@ -1487,66 +1654,8 @@ public:
     }
 
 };
+}
 
-
-#endif 
-
- // ******************** From: ApprovalComparator.h
-#ifndef APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
-#define APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
-
-
-class ApprovalComparator
-{
-public:
-    virtual ~ApprovalComparator() = default;
-
-    virtual bool contentsAreEquivalent(std::string receivedPath,
-                                       std::string approvedPath) const = 0;
-};
-
-#endif 
-
- // ******************** From: TextFileComparator.h
-#ifndef APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
-#define APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
-
-
-class TextFileComparator : public ApprovalComparator
-{
-public:
-    static std::ifstream::int_type getNextRelevantCharacter(std::ifstream& astream)
-    {
-        auto ch = astream.get();
-        if (ch == '\r')
-        {
-            return astream.get();
-        }
-        else
-        {
-            return ch;
-        }
-    }
-
-    virtual bool contentsAreEquivalent(std::string receivedPath,
-                                       std::string approvedPath) const
-    {
-        std::ifstream astream(approvedPath.c_str(),
-                              std::ios::binary | std::ifstream::in);
-        std::ifstream rstream(receivedPath.c_str(),
-                              std::ios::binary | std::ifstream::in);
-
-        while (astream.good() && rstream.good()) {
-            int a = getNextRelevantCharacter(astream);
-            int r = getNextRelevantCharacter(rstream);
-
-            if (a != r) {
-                return false;
-            }
-        }
-        return true;
-    }
-};
 #endif 
 
  // ******************** From: ApprovalException.h
@@ -1554,6 +1663,7 @@ public:
 #define APPROVALTESTS_CPP_APPROVALEXCEPTION_H
 
 
+namespace ApprovalTests {
 class ApprovalException : public std::exception
 {
 private:
@@ -1561,7 +1671,7 @@ private:
 public:
     ApprovalException( const std::string& msg ) : message( msg ) {}
 
-    virtual const char *what() const throw()
+    virtual const char *what() const noexcept override
     {
         return message.c_str();
     }
@@ -1603,30 +1713,94 @@ public:
     {
     }
 };
+}
 
 #endif
+
+ // ******************** From: ApprovalComparator.h
+#ifndef APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
+#define APPROVALTESTS_CPP_APPROVALCOMPARATOR_H
+
+
+namespace ApprovalTests {
+class ApprovalComparator
+{
+public:
+    virtual ~ApprovalComparator() = default;
+
+    virtual bool contentsAreEquivalent(std::string receivedPath,
+                                       std::string approvedPath) const = 0;
+};
+}
+
+#endif 
+
+ // ******************** From: TextFileComparator.h
+#ifndef APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
+#define APPROVALTESTS_CPP_TEXTFILECOMPARATOR_H
+
+
+namespace ApprovalTests {
+class TextFileComparator : public ApprovalComparator
+{
+public:
+    static std::ifstream::int_type getNextRelevantCharacter(std::ifstream& astream)
+    {
+        auto ch = astream.get();
+        if (ch == '\r')
+        {
+            return astream.get();
+        }
+        else
+        {
+            return ch;
+        }
+    }
+
+    virtual bool contentsAreEquivalent(std::string receivedPath,
+                                       std::string approvedPath) const override
+    {
+        std::ifstream astream(approvedPath.c_str(),
+                              std::ios::binary | std::ifstream::in);
+        std::ifstream rstream(receivedPath.c_str(),
+                              std::ios::binary | std::ifstream::in);
+
+        while (astream.good() && rstream.good()) {
+            int a = getNextRelevantCharacter(astream);
+            int r = getNextRelevantCharacter(rstream);
+
+            if (a != r) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+}
+#endif 
 
  // ******************** From: FileApprover.h
 #ifndef APPROVALTESTS_CPP_FILEAPPROVER_H
 #define APPROVALTESTS_CPP_FILEAPPROVER_H
 
 
+namespace ApprovalTests {
 class FileApprover {
 private:
     using ComparatorContainer = std::map< std::string, std::shared_ptr<ApprovalComparator> >;
     APPROVAL_TESTS_MACROS_STATIC(ComparatorContainer, comparators, new ComparatorContainer())
 
 public:
-    FileApprover() {};
+    FileApprover() = default;
 
-    ~FileApprover() {};
+    ~FileApprover() = default;
 
     static void registerComparator(std::string extensionWithDot, std::shared_ptr<ApprovalComparator> comparator)
     {
         comparators()[extensionWithDot] = comparator;
     }
 
-    static std::shared_ptr<ApprovalComparator> getComparatorForFile(string receivedPath) {
+    static std::shared_ptr<ApprovalComparator> getComparatorForFile(std::string receivedPath) {
         const std::string fileExtension = FileUtils::getExtensionWithDot(receivedPath);
         auto iterator = comparators().find(fileExtension);
         if (iterator != comparators().end()) {
@@ -1657,7 +1831,7 @@ public:
         verify(receivedPath, approvedPath, *getComparatorForFile(receivedPath));
     }
 
-    static void verify(ApprovalNamer& n, ApprovalWriter& s, const Reporter& r) {
+    static void verify(const ApprovalNamer& n, const ApprovalWriter& s, const Reporter& r) {
         std::string approvedPath = n.getApprovedFile(s.getFileExtensionWithDot());
         std::string receivedPath = n.getReceivedFile(s.getFileExtensionWithDot());
         s.write(receivedPath);
@@ -1673,7 +1847,7 @@ public:
     }
 
     static void
-    reportAfterTryingFrontLoadedReporter(const string &receivedPath, const string &approvedPath, const Reporter &r)
+    reportAfterTryingFrontLoadedReporter(const std::string &receivedPath, const std::string &approvedPath, const Reporter &r)
     {
         auto tryFirst = FrontLoadedReporterFactory::getFrontLoadedReporter();
         if (!tryFirst->report(receivedPath, approvedPath))
@@ -1684,6 +1858,7 @@ public:
 
 
 };
+}
 
 #endif
 
@@ -1692,16 +1867,17 @@ public:
 #define APPROVALTESTS_CPP_APPROVALS_H
 
 
+namespace ApprovalTests {
 class Approvals {
 private:
-    Approvals() {}
+    Approvals() = default;
 
-    ~Approvals() {}
+    ~Approvals() = default;
 
 public:
     static std::shared_ptr<ApprovalNamer> getDefaultNamer()
     {
-        return std::make_shared<ApprovalTestNamer>();
+        return DefaultNamerFactory::getDefaultNamer()();
     }
 
     static void verify(std::string contents, const Reporter &reporter = DefaultReporter()) {
@@ -1715,9 +1891,12 @@ public:
         verify(StringUtils::toString(contents), reporter);
     }
 
-    template<typename T>
+    template<
+        typename T,
+        typename Function,
+        typename = IsNotDerivedFromReporter<Function>>
     static void verify(const T& contents,
-                       std::function<void(const T&, std::ostream &)> converter,
+                       Function converter,
                        const Reporter &reporter = DefaultReporter())
     {
         std::stringstream s;
@@ -1740,7 +1919,7 @@ public:
         }
         Approvals::verify(message, reporter);
     }
-    
+
     template<typename Iterator>
     static void verifyAll(std::string header,
                           const Iterator &start, const Iterator &finish,
@@ -1785,7 +1964,7 @@ public:
         ExistingFileNamer namer(filePath);
         FileApprover::verify(namer, writer, reporter);
     }
-    
+
     static SubdirectoryDisposer useApprovalsSubdirectory(std::string subdirectory = "approval_tests")
     {
         return SubdirectoryDisposer(subdirectory);
@@ -1801,78 +1980,22 @@ public:
         return FrontLoadedReporterDisposer(reporter);
     }
 
+    static DefaultNamerDisposer useAsDefaultNamer(NamerCreator namerCreator)
+    {
+        return DefaultNamerDisposer(namerCreator);
+    }
+
 };
+}
 
 #endif
-
- // ******************** From: Catch2Approvals.h
-
-#ifndef APPROVALTESTS_CPP_CATCH2APPROVALS_H
-#define APPROVALTESTS_CPP_CATCH2APPROVALS_H
-
-
-// <SingleHpp unalterable>
-#ifdef APPROVALS_CATCH
-#define CATCH_CONFIG_MAIN
-
-#include <Catch.hpp>
-
-struct Catch2ApprovalListener : Catch::TestEventListenerBase {
-    using TestEventListenerBase::TestEventListenerBase;
-    TestName currentTest;
-
-    Catch2ApprovalListener(Catch::ReporterConfig const &_config) : Catch::TestEventListenerBase(_config) {}
-
-    virtual void testCaseStarting(Catch::TestCaseInfo const &testInfo) override {
-
-        currentTest.setFileName(testInfo.lineInfo.file);
-        ApprovalTestNamer::currentTest(&currentTest);
-    }
-
-    virtual void testCaseEnded(Catch::TestCaseStats const &/*testCaseStats*/) override {
-        while (!currentTest.sections.empty()) {
-            currentTest.sections.pop_back();
-        }
-    }
-
-    virtual void sectionStarting(Catch::SectionInfo const &sectionInfo) override {
-        currentTest.sections.push_back(sectionInfo.name);
-    }
-
-    virtual void sectionEnded(Catch::SectionStats const &/*sectionStats*/) override {
-        currentTest.sections.pop_back();
-    }
-};
-CATCH_REGISTER_LISTENER(Catch2ApprovalListener)
-
-#endif
-#ifdef TEST_COMMIT_REVERT_CATCH
-
-struct Catch2TestCommitRevert : Catch::TestEventListenerBase {
-    using TestEventListenerBase::TestEventListenerBase;
-    virtual void  testRunEnded( Catch::TestRunStats const& testRunStats )override{
-        bool commit = testRunStats.totals.testCases.allOk();
-        std::string message = "r ";
-        if (commit) {
-            std::cout << "git add -A n";
-            std::cout << "git commit -m " << message;
-        } else
-        {
-            std::cout << "git clean -fd n";
-            std::cout << "git reset --hard HEAD n";
-        }
-    }
-};
-CATCH_REGISTER_LISTENER(Catch2TestCommitRevert)
-#endif
-// </SingleHpp>
-#endif 
 
  // ******************** From: CombinationApprovals.h
 #ifndef APPROVALTESTS_CPP_COMBINATIONAPPROVALS_H
 #define APPROVALTESTS_CPP_COMBINATIONAPPROVALS_H
 
 
+namespace ApprovalTests {
 class Empty
 {
 public:
@@ -1909,8 +2032,7 @@ public:
         typename Container7,
         typename Container8,
         typename Container9,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container9>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container9>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -1926,23 +2048,23 @@ public:
     {
         Empty empty;
         std::stringstream s;
-        for (auto input1 : inputs1)
+        for (const auto& input1 : inputs1)
         {
-            for (auto input2 : inputs2)
+            for (const auto& input2 : inputs2)
             {
-                for (auto input3 : inputs3)
+                for (const auto& input3 : inputs3)
                 {
-                    for (auto input4 : inputs4)
+                    for (const auto& input4 : inputs4)
                     {
-                        for (auto input5 : inputs5)
+                        for (const auto& input5 : inputs5)
                         {
-                            for (auto input6 : inputs6)
+                            for (const auto& input6 : inputs6)
                             {
-                                for (auto input7 : inputs7)
+                                for (const auto& input7 : inputs7)
                                 {
-                                    for (auto input8 : inputs8)
+                                    for (const auto& input8 : inputs8)
                                     {
-                                        for (auto input9 : inputs9)
+                                        for (const auto& input9 : inputs9)
                                         {
                                             s << "(" << input1;
                                             if (empty != input2) { s << ", " << input2; }
@@ -1977,8 +2099,7 @@ public:
         typename Container6,
         typename Container7,
         typename Container8,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container8>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container8>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2022,8 +2143,7 @@ public:
         typename Container5,
         typename Container6,
         typename Container7,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container7>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container7>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2063,8 +2183,7 @@ public:
         typename Container4,
         typename Container5,
         typename Container6,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container6>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container6>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2100,8 +2219,7 @@ public:
         typename Container3,
         typename Container4,
         typename Container5,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container5>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container5>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2133,8 +2251,7 @@ public:
         typename Container2,
         typename Container3,
         typename Container4,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container4>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container4>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2162,8 +2279,7 @@ public:
         typename Container1,
         typename Container2,
         typename Container3,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container3>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container3>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2187,8 +2303,7 @@ public:
         typename Function,
         typename Container1,
         typename Container2,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container2>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container2>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2208,8 +2323,7 @@ public:
     template <
         typename Function,
         typename Container1,
-        
-        typename std::enable_if<! std::is_base_of<Reporter, Container1>::value, int>::type = 0>
+        typename = IsNotDerivedFromReporter<Container1>>
     static void verifyAllCombinations(
         Function converter,
         const Container1& inputs1,
@@ -2232,8 +2346,206 @@ public:
         return EmptyContainer{Empty()};
     }
 };
+}
 
 #endif
+
+ // ******************** From: Catch2Approvals.h
+
+#ifndef APPROVALTESTS_CPP_CATCH2APPROVALS_H
+#define APPROVALTESTS_CPP_CATCH2APPROVALS_H
+
+
+// <SingleHpp unalterable>
+#ifdef APPROVALS_CATCH
+#define CATCH_CONFIG_MAIN
+
+#include <Catch.hpp>
+
+//namespace ApprovalTests {
+struct Catch2ApprovalListener : Catch::TestEventListenerBase {
+    ApprovalTests::TestName currentTest;
+    using TestEventListenerBase::TestEventListenerBase; // This using allows us to use all base-class constructors
+    virtual void testCaseStarting(Catch::TestCaseInfo const &testInfo) override {
+
+        currentTest.setFileName(testInfo.lineInfo.file);
+        ApprovalTests::ApprovalTestNamer::currentTest(&currentTest);
+    }
+
+    virtual void testCaseEnded(Catch::TestCaseStats const &/*testCaseStats*/) override {
+        while (!currentTest.sections.empty()) {
+            currentTest.sections.pop_back();
+        }
+    }
+
+    virtual void sectionStarting(Catch::SectionInfo const &sectionInfo) override {
+        currentTest.sections.push_back(sectionInfo.name);
+    }
+
+    virtual void sectionEnded(Catch::SectionStats const &/*sectionStats*/) override {
+        currentTest.sections.pop_back();
+    }
+};
+//}
+CATCH_REGISTER_LISTENER(Catch2ApprovalListener)
+
+#endif
+#ifdef TEST_COMMIT_REVERT_CATCH
+
+//namespace ApprovalTests {
+struct Catch2TestCommitRevert : Catch::TestEventListenerBase {
+    using TestEventListenerBase::TestEventListenerBase; // This using allows us to use all base-class constructors
+    virtual void  testRunEnded( Catch::TestRunStats const& testRunStats )override{
+        bool commit = testRunStats.totals.testCases.allOk();
+        std::string message = "r ";
+        if (commit) {
+            std::cout << "git add -A n";
+            std::cout << "git commit -m " << message;
+        } else
+        {
+            std::cout << "git clean -fd n";
+            std::cout << "git reset --hard HEAD n";
+        }
+    }
+};
+//}
+CATCH_REGISTER_LISTENER(Catch2TestCommitRevert)
+#endif
+// </SingleHpp>
+#endif 
+
+ // ******************** From: DocTestApprovals.h
+#ifndef APPROVALTESTS_CPP_DOCTESTAPPROVALS_H
+#define APPROVALTESTS_CPP_DOCTESTAPPROVALS_H
+
+
+// <SingleHpp unalterable>
+#ifdef APPROVALS_DOCTEST
+
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+
+#include <doctest.h>
+
+namespace ApprovalTests {
+// anonymous namespace to prevent compiler -Wsubobject-linkage warnings
+// This is OK as this code is only compiled on main()
+namespace {
+    struct AbstractReporter : doctest::IReporter {
+        virtual void report_query(const doctest::QueryData&) override {}
+        // called when the whole test run starts
+        virtual void test_run_start() override {}
+
+        // called when the whole test run ends (caching a pointer to the input doesn't make sense here)
+        virtual void test_run_end(const doctest::TestRunStats &) override {}
+
+        // called when a test case is started (safe to cache a pointer to the input)
+        virtual void test_case_start(const doctest::TestCaseData &) override {}
+
+        // called when a test case has ended
+        virtual void test_case_end(const doctest::CurrentTestCaseStats &) override {}
+
+        // called when an exception is thrown from the test case (or it crashes)
+        virtual void test_case_exception(const doctest::TestCaseException &) override {}
+
+        // called whenever a subcase is entered (don't cache pointers to the input)
+        virtual void subcase_start(const doctest::SubcaseSignature &) override {}
+
+        // called whenever a subcase is exited (don't cache pointers to the input)
+        virtual void subcase_end() override {}
+
+        // called for each assert (don't cache pointers to the input)
+        virtual void log_assert(const doctest::AssertData &) override {}
+
+        // called for each message (don't cache pointers to the input)
+        virtual void log_message(const doctest::MessageData &) override {}
+
+        // called when a test case is skipped either because it doesn't pass the filters, has a skip decorator
+        // or isn't in the execution range (between first and last) (safe to cache a pointer to the input)
+        virtual void test_case_skipped(const doctest::TestCaseData &) override {}
+
+
+    };
+
+    struct DocTestApprovalListener : AbstractReporter {
+        TestName currentTest;
+
+        // constructor has to accept the ContextOptions by ref as a single argument
+        DocTestApprovalListener(const doctest::ContextOptions & /*in*/) {
+        }
+
+        void test_case_start(const doctest::TestCaseData &testInfo) override {
+
+            currentTest.sections.push_back(testInfo.m_name);
+            currentTest.setFileName(testInfo.m_file);
+            ApprovalTestNamer::currentTest(&currentTest);
+        }
+
+        void test_case_end(const doctest::CurrentTestCaseStats & /*in*/) override {
+
+            while (!currentTest.sections.empty()) {
+                currentTest.sections.pop_back();
+            }
+        }
+
+        void subcase_start(const doctest::SubcaseSignature &signature) override {
+
+            currentTest.sections.push_back(signature.m_name);
+        }
+
+        void subcase_end() override {
+
+            currentTest.sections.pop_back();
+        }
+    };
+}
+}
+
+REGISTER_LISTENER("approvals", 0, ApprovalTests::DocTestApprovalListener);
+
+
+#endif // APPROVALS_DOCTEST
+// </SingleHpp>
+#endif 
+
+ // ******************** From: GoogleConfiguration.h
+#ifndef APPROVALTESTS_CPP_GOOGLECONFIGURATION_H
+#define APPROVALTESTS_CPP_GOOGLECONFIGURATION_H
+
+
+namespace ApprovalTests {
+class GoogleConfiguration
+{
+public:
+    
+    APPROVAL_TESTS_NO_DISCARD static bool addTestCaseNameRedundancyCheck(GoogleCustomizationsFactory::Comparator comparator)
+    {
+        return GoogleCustomizationsFactory::addTestCaseNameRedundancyCheck(comparator);
+    }
+
+    
+    APPROVAL_TESTS_NO_DISCARD static bool addIgnorableTestCaseNameSuffix(std::string suffix)
+    {
+        return addTestCaseNameRedundancyCheck( createIgnorableTestCaseNameSuffixCheck(suffix) );
+    }
+
+    static GoogleCustomizationsFactory::Comparator createIgnorableTestCaseNameSuffixCheck( const std::string& suffix )
+    {
+        return [suffix](std::string testFileNameWithExtension, std::string testCaseName)
+        {
+            if (testCaseName.length() <= suffix.length() || !StringUtils::endsWith(testCaseName, suffix))
+            {
+                return false;
+            }
+
+            auto withoutSuffix = testCaseName.substr(0, testCaseName.length() - suffix.length());
+            auto withFileExtension = withoutSuffix + ".";
+            return StringUtils::contains(testFileNameWithExtension, withFileExtension);
+        };
+    }
+};
+}
+
+#endif 
 
  // ******************** From: GoogleTestApprovals.h
 #ifndef APPROVALTESTS_CPP_GOOGLTESTAPPPROVALS_H
@@ -2249,7 +2561,7 @@ public:
 // <SingleHpp unalterable>
 #include "gtest/gtest.h"
 
-
+namespace ApprovalTests {
 class GoogleTestListener : public ::testing::EmptyTestEventListener
 {
     TestName currentTest;
@@ -2287,12 +2599,13 @@ inline void initializeApprovalTestsForGoogleTests() {
     auto& listeners = testing::UnitTest::GetInstance()->listeners();
     listeners.Append(new GoogleTestListener);
 }
+}
 
 #ifndef APPROVALS_GOOGLETEST_EXISTING_MAIN
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    initializeApprovalTestsForGoogleTests();
+    ApprovalTests::initializeApprovalTestsForGoogleTests();
     return RUN_ALL_TESTS();
 }
 #endif //APPROVALS_GOOGLETEST_EXISTING_MAIN
@@ -2301,164 +2614,63 @@ int main(int argc, char** argv)
 #endif
 #endif 
 
- // ******************** From: DocTestApprovals.h
-#ifndef APPROVALTESTS_CPP_DOCTESTAPPROVALS_H
-#define APPROVALTESTS_CPP_DOCTESTAPPROVALS_H
+ // ******************** From: NamerFactory.h
+#ifndef APPROVALTESTS_CPP_NAMERFACTORY_H
+#define APPROVALTESTS_CPP_NAMERFACTORY_H
 
 
-// <SingleHpp unalterable>
-#ifdef APPROVALS_DOCTEST
 
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-
-#include <doctest.h>
-
-// anonymous namespace to prevent compiler -Wsubobject-linkage warnings
-// This is OK as this code is only compiled on main()
-namespace {
-    struct AbstractReporter : doctest::IReporter {
-        virtual void report_query(const doctest::QueryData&) {}
-        // called when the whole test run starts
-        virtual void test_run_start() {}
-
-        // called when the whole test run ends (caching a pointer to the input doesn't make sense here)
-        virtual void test_run_end(const doctest::TestRunStats &) {}
-
-        // called when a test case is started (safe to cache a pointer to the input)
-        virtual void test_case_start(const doctest::TestCaseData &) {}
-
-        // called when a test case has ended
-        virtual void test_case_end(const doctest::CurrentTestCaseStats &) {}
-
-        // called when an exception is thrown from the test case (or it crashes)
-        virtual void test_case_exception(const doctest::TestCaseException &) {}
-
-        // called whenever a subcase is entered (don't cache pointers to the input)
-        virtual void subcase_start(const doctest::SubcaseSignature &) {}
-
-        // called whenever a subcase is exited (don't cache pointers to the input)
-        virtual void subcase_end() {}
-
-        // called for each assert (don't cache pointers to the input)
-        virtual void log_assert(const doctest::AssertData &) {}
-
-        // called for each message (don't cache pointers to the input)
-        virtual void log_message(const doctest::MessageData &) {}
-
-        // called when a test case is skipped either because it doesn't pass the filters, has a skip decorator
-        // or isn't in the execution range (between first and last) (safe to cache a pointer to the input)
-        virtual void test_case_skipped(const doctest::TestCaseData &) {}
-
-
-    };
-
-    struct DocTestApprovalListener : AbstractReporter {
-        TestName currentTest;
-
-        // constructor has to accept the ContextOptions by ref as a single argument
-        DocTestApprovalListener(const doctest::ContextOptions & /*in*/) {
-        }
-
-        void test_case_start(const doctest::TestCaseData &testInfo) override {
-
-            currentTest.sections.push_back(testInfo.m_name);
-            currentTest.setFileName(testInfo.m_file);
-            ApprovalTestNamer::currentTest(&currentTest);
-        }
-
-        void test_case_end(const doctest::CurrentTestCaseStats & /*in*/) override {
-
-            while (!currentTest.sections.empty()) {
-                currentTest.sections.pop_back();
-            }
-        }
-
-        void subcase_start(const doctest::SubcaseSignature &signature) override {
-
-            currentTest.sections.push_back(signature.m_name);
-        }
-
-        void subcase_end() override {
-
-            currentTest.sections.pop_back();
-        }
-    };
+namespace ApprovalTests {
+struct NamerFactory
+{
+    static SectionNameDisposer appendToOutputFilename(std::string sectionName)
+    {
+        return SectionNameDisposer(ApprovalTestNamer::currentTest(), sectionName);
+    }
+};
 }
 
-REGISTER_LISTENER("approvals", 0, DocTestApprovalListener);
-
-
-#endif // APPROVALS_DOCTEST
-// </SingleHpp>
 #endif 
 
- // ******************** From: GoogleConfiguration.h
-#ifndef APPROVALTESTS_CPP_GOOGLECONFIGURATION_H
-#define APPROVALTESTS_CPP_GOOGLECONFIGURATION_H
+ // ******************** From: SeparateApprovedAndReceivedDirectoriesNamer.h
+#ifndef APPROVALTESTS_CPP_SEPARATEAPPROVEDANDRECEIVEDDIRECTORIESNAMER_H
+#define APPROVALTESTS_CPP_SEPARATEAPPROVEDANDRECEIVEDDIRECTORIESNAMER_H
 
 
-class GoogleConfiguration
+namespace ApprovalTests {
+class SeparateApprovedAndReceivedDirectoriesNamer : public ApprovalTestNamer
 {
 public:
-    static bool addTestCaseNameRedundancyCheck(GoogleCustomizationsFactory::Comparator comparator)
+    virtual ~SeparateApprovedAndReceivedDirectoriesNamer() = default;
+
+    std::string getFullFileNameWithExtraDirectory(std::string approved, std::string extensionWithDot) const
     {
-        return GoogleCustomizationsFactory::addTestCaseNameRedundancyCheck(comparator);
+        std::string outputDirectory = getDirectory() +  approved;
+        SystemUtils::ensureDirectoryExists(outputDirectory);
+    
+        std::string outputFile = getFileName() + "." + getTestName() + extensionWithDot;
+    
+        return outputDirectory + SystemUtils::getDirectorySeparator() + outputFile;
+    }
+    
+    virtual std::string getApprovedFile(std::string extensionWithDot) const override
+    {
+        return getFullFileNameWithExtraDirectory("approved", extensionWithDot);
+    }
+    
+    virtual std::string getReceivedFile(std::string extensionWithDot) const override
+    {
+        return getFullFileNameWithExtraDirectory("received", extensionWithDot);
+    }
+    
+    static DefaultNamerDisposer useAsDefaultNamer()
+    {
+        return Approvals::useAsDefaultNamer([](){return std::make_shared<SeparateApprovedAndReceivedDirectoriesNamer>();});
     }
 
-    static bool addIgnorableTestCaseNameSuffix(std::string suffix)
-    {
-        return addTestCaseNameRedundancyCheck( createIgnorableTestCaseNameSuffixCheck(suffix) );
-    }
-
-    static GoogleCustomizationsFactory::Comparator createIgnorableTestCaseNameSuffixCheck( const std::string& suffix )
-    {
-        return [suffix](std::string testFileNameWithExtension, std::string testCaseName)
-        {
-            if (testCaseName.length() <= suffix.length() || !StringUtils::endsWith(testCaseName, suffix))
-            {
-                return false;
-            }
-
-            auto withoutSuffix = testCaseName.substr(0, testCaseName.length() - suffix.length());
-            auto withFileExtension = withoutSuffix + ".";
-            return StringUtils::contains(testFileNameWithExtension, withFileExtension);
-        };
-    }
 };
+}
 
-#endif 
-
- // ******************** From: OkraApprovals.h
-#ifndef APPROVALTESTS_CPP_OKRAAPPPROVALS_H
-#define APPROVALTESTS_CPP_OKRAAPPPROVALS_H
-
-#ifdef APPROVALS_OKRA
-
-// <SingleHpp unalterable>
-#include "Okra.h"
-
-
-struct OkraApprovalListener : public okra::IListener
-{
- TestName currentTest;
-
-public:
- void OnStart(const okra::TestInfo &testInfo) override
- {
-  currentTest.fileName = testInfo.file_path;
-  currentTest.sections = {testInfo.name};
-  ApprovalTestNamer::currentTest(&currentTest);
- }
-
- void OnEnd(const okra::TestInfo &testInfo, std::chrono::high_resolution_clock::duration duration) override {
- }
- void OnFail(const std::string &message) override {
- }
-};
-
-OKRA_REGISTER_LISTENER(OkraApprovalListener);
-// </SingleHpp>
-#endif
 #endif 
 
  // ******************** From: AutoApproveIfMissingReporter.h
@@ -2466,6 +2678,7 @@ OKRA_REGISTER_LISTENER(OkraApprovalListener);
 #define APPROVALTESTS_CPP_AUTOAPPROVEIFMISSINGREPORTER_H
 
 
+namespace ApprovalTests {
 class AutoApproveIfMissingReporter : public Reporter
 {
 public:
@@ -2479,6 +2692,7 @@ public:
         return AutoApproveReporter().report(received, approved);
     }
 };
+}
 
 #endif 
 
@@ -2488,6 +2702,7 @@ public:
 
 
 
+namespace ApprovalTests {
 class BlockingReporter : public Reporter
 {
 private:
@@ -2517,6 +2732,7 @@ public:
         return blocker->isBlockingOnThisMachine();
     }
 };
+}
 
 #endif 
 
@@ -2527,6 +2743,7 @@ public:
 
 
 
+namespace ApprovalTests {
 class ClipboardReporter : public Reporter {
 public:
     static std::string getCommandLineFor(std::string received, std::string approved, bool isWindows)
@@ -2552,6 +2769,7 @@ public:
         system(cmd.c_str());
     }
 };
+}
 
 #endif 
 
@@ -2560,6 +2778,7 @@ public:
 #define APPROVALTESTS_CPP_COMBINATIONREPORTER_H
 
 
+namespace ApprovalTests {
 class CombinationReporter : public Reporter
 {
 private:
@@ -2584,6 +2803,7 @@ public:
         return result;
     }
 };
+}
 
 #endif 
 
@@ -2592,6 +2812,7 @@ public:
 #define APPROVALTESTS_CPP_QUIETREPORTER_H
 
 
+namespace ApprovalTests {
 
 class QuietReporter : public Reporter
 {
@@ -2601,6 +2822,7 @@ public:
         return true;
     }
 };
+}
 
 #endif 
 
