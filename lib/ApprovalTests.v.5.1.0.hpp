@@ -1,17 +1,17 @@
-// Approval Tests version v.5.0.0n// More information at: https://github.com/approvals/ApprovalTests.cppn#include <string>
+// Approval Tests version v.5.1.0n// More information at: https://github.com/approvals/ApprovalTests.cppn#include <string>
 #include <fstream>
 #include <stdexcept>
+#include <utility>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <algorithm>
 #include <sstream>
-#include <memory>
+#include <iostream>
 #include <stack>
 #include <vector>
 #include <functional>
-#include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <numeric>
+#include <memory>
 #include <exception>
 #include <map>
 #include <ostream>
@@ -94,8 +94,8 @@ private:
     std::string ext;
 
 public:
-    StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
-        : s( contents ), ext( fileExtensionWithDot ) {}
+    explicit StringWriter( std::string contents, std::string fileExtensionWithDot = ".txt" )
+        : s(std::move(contents)), ext(std::move(fileExtensionWithDot)) {}
 
     std::string getFileExtensionWithDot() const override
     {
@@ -139,14 +139,14 @@ public:
 namespace ApprovalTests {
 class FileUtils {
 public:
-    static bool fileExists(std::string path)
+    static bool fileExists(const std::string& path)
     {
-        struct stat info;
+        struct stat info{};
         return stat( path.c_str(), &info ) == 0;
     }
 
-    static int fileSize(std::string path) {
-        struct stat statbuf;
+    static int fileSize(const std::string& path) {
+        struct stat statbuf{};
         int stat_ok = stat(path.c_str(), &statbuf);
 
         if (stat_ok == -1) {
@@ -156,19 +156,19 @@ public:
         return int(statbuf.st_size);
     }
 
-    static void ensureFileExists(std::string fullFilePath) {
+    static void ensureFileExists(const std::string& fullFilePath) {
         if (!fileExists(fullFilePath)) {
             StringWriter s("", "");
             s.write(fullFilePath);
         }
     }
 
-    static std::string getExtensionWithDot(std::string filePath) {
+    static std::string getExtensionWithDot(const std::string& filePath) {
         std::size_t found = filePath.find_last_of('.');
         return filePath.substr(found);
     }
 
-    static void writeToFile(std::string filePath, std::string content)
+    static void writeToFile(const std::string& filePath, const std::string& content)
     {
         std::ofstream out(filePath.c_str(), std::ios::binary | std::ofstream::out);
         if ( ! out)
@@ -202,7 +202,7 @@ public:
         return inText;
     }
 
-    static bool contains(std::string inText, const std::string& find)
+    static bool contains(const std::string& inText, const std::string& find)
     {
         return inText.find(find, 0) != std::string::npos;
     }
@@ -405,7 +405,7 @@ public:
         return "Unknown Computer";
     }
 
-    static void makeDirectoryForWindows(std::string directory)
+    static void makeDirectoryForWindows(const std::string& directory)
     {
         APPROVAL_TESTS_UNUSED(directory);
 #ifdef _WIN32
@@ -418,7 +418,7 @@ public:
 #endif
     }
 
-    static void makeDirectoryForNonWindows(std::string directory)
+    static void makeDirectoryForNonWindows(const std::string& directory)
     {
         APPROVAL_TESTS_UNUSED(directory);
 #ifndef _WIN32
@@ -432,13 +432,13 @@ public:
 #endif
     }
 
-    static void makeDirectory(std::string directory)
+    static void makeDirectory(const std::string& directory)
     {
         makeDirectoryForWindows(directory);
         makeDirectoryForNonWindows(directory);
     }
 
-    static void ensureDirectoryExists(std::string fullFilePath)
+    static void ensureDirectoryExists(const std::string& fullFilePath)
     {
         if (!FileUtils::fileExists(fullFilePath))
         {
@@ -454,7 +454,6 @@ public:
 #define APPROVALTESTS_CPP_MACHINEBLOCKER_H
 
 
-
 namespace ApprovalTests {
 class MachineBlocker : public Blocker
 {
@@ -465,7 +464,7 @@ private:
     MachineBlocker() = delete;
 
 public:
-    MachineBlocker( const std::string& machineName, bool block ) : machineName(machineName), block(block)
+    MachineBlocker(std::string machineName, bool block ) : machineName(std::move(machineName)), block(block)
     {
     }
 
@@ -498,7 +497,7 @@ namespace ApprovalTests {
 class FileUtilsSystemSpecific
 {
 public:
-    static std::string getCommandLineForCopy(std::string source, std::string destination, bool isWindows)
+    static std::string getCommandLineForCopy(const std::string& source, const std::string& destination, bool isWindows)
     {
         if (isWindows) {
             return std::string("copy /Y ") + "\"" + source + "\" \"" + destination + "\"";
@@ -507,7 +506,7 @@ public:
         }
     }
 
-    static void copyFile( std::string source, std::string destination )
+    static void copyFile(const std::string& source, const std::string& destination )
     {
         system( getCommandLineForCopy(source, destination, SystemUtils::isWindowsOs()).c_str() );
     }
@@ -538,6 +537,7 @@ using IsNotDerivedFromReporter = typename std::enable_if<!std::is_base_of<Report
  // ******************** From: AutoApproveReporter.h
 #ifndef APPROVALTESTS_CPP_AUTOAPPROVEREPORTER_H
 #define APPROVALTESTS_CPP_AUTOAPPROVEREPORTER_H
+
 
 
 namespace ApprovalTests {
@@ -649,35 +649,41 @@ public:
         }
         catch( const std::runtime_error& )
         {
-            std::string lineBreak = "************************************************************************************n";
-            std::string lineBuffer = "*                                                                                  *n";
-            std::string helpMessage =
-                "nn" + lineBreak + lineBuffer + 
+            std::string helpMessage = getMisconfiguredMainHelp();
+            throw std::runtime_error( helpMessage );
+        }
+    }
+
+    static std::string getMisconfiguredMainHelp()
+    {
+        std::string lineBreak = "************************************************************************************n";
+        std::string lineBuffer = "*                                                                                  *n";
+        std::string helpMessage =
+                "nn" + lineBreak + lineBuffer +
 R"(* Welcome to Approval Tests.
-* 
+*
 * You have forgotten to configure your test framework for Approval Tests.
-* 
+*
 * To do this in Catch, add the following to your main.cpp:
-* 
+*
 *     #define APPROVALS_CATCH
 *     #include "ApprovalTests.hpp"
-* 
+*
 * To do this in Google Test, add the following to your main.cpp:
-* 
+*
 *     #define APPROVALS_GOOGLETEST
 *     #include "ApprovalTests.hpp"
-* 
+*
 * To do this in doctest, add the following to your main.cpp:
-* 
+*
 *     #define APPROVALS_DOCTEST
 *     #include "ApprovalTests.hpp"
-* 
+*
 * For more information, please visit:
 * https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
 )" +
                     lineBuffer + lineBreak + 'n';
-            throw std::runtime_error( helpMessage );
-        }
+        return helpMessage;
     }
 // </SingleHpp>
 
@@ -725,7 +731,7 @@ R"(* Welcome to Approval Tests.
         return getSourceFileName() + "." + getTestName();
     }
 
-    std::string getFullFileName(std::string approved, std::string extensionWithDot) const {
+    std::string getFullFileName(const std::string& approved, const std::string& extensionWithDot) const {
         std::stringstream ext;
         ext << getDirectory() << getOutputFileBaseName() << approved << extensionWithDot;
         return ext.str();
@@ -783,7 +789,7 @@ private:
     {
         auto container = new ComparatorContainer;
 
-        auto exactNameMatching = [](std::string testFileNameWithExtension, std::string testCaseName)
+        auto exactNameMatching = [](const std::string& testFileNameWithExtension, const std::string& testCaseName)
         {
             return StringUtils::contains(testFileNameWithExtension, testCaseName + ".");
         };
@@ -797,7 +803,7 @@ public:
         return comparatorContainer();
     }
 
-    APPROVAL_TESTS_NO_DISCARD static bool addTestCaseNameRedundancyCheck(Comparator comparator)
+    APPROVAL_TESTS_NO_DISCARD static bool addTestCaseNameRedundancyCheck(const Comparator& comparator)
     {
         comparatorContainer().push_back(comparator);
         return true;
@@ -819,7 +825,7 @@ namespace ApprovalTests {
 class ExistingFile : public ApprovalWriter{
     std::string filePath;
 public:
-    ExistingFile(std::string filePath) : filePath(filePath){}
+    explicit ExistingFile(std::string filePath) : filePath(std::move(filePath)){}
     virtual std::string getFileExtensionWithDot() const override {
         return FileUtils::getExtensionWithDot(filePath);
     }
@@ -858,7 +864,7 @@ public:
 
 
 namespace ApprovalTests {
-typedef std::vector<std::string> (*ConvertArgumentsFunctionPointer)(std::vector<std::string>);
+    using ConvertArgumentsFunctionPointer = std::vector<std::string>(*)(std::vector<std::string>);
 
 class SystemLauncher : public CommandLauncher
 {
@@ -905,7 +911,7 @@ public:
 
         argv = convertArgumentsForSystemLaunching(argv);
 
-        std::string command = std::accumulate(argv.begin(), argv.end(), std::string(""), [](std::string a, std::string b) {return a + " " + "\"" + b + "\""; });
+        std::string command = std::accumulate(argv.begin(), argv.end(), std::string(""), [](const std::string& a, const std::string& b) {return a + " " + "\"" + b + "\""; });
         std::string launch = SystemUtils::isWindowsOs() ? ("start \"\" " + command) : (command + " &");
         system(launch.c_str());
         return true;
@@ -929,7 +935,7 @@ private:
 
 protected:
     CommandReporter(std::string command, CommandLauncher *launcher)
-            : cmd(command), l(launcher) {
+            : cmd(std::move(command)), l(launcher) {
     }
 
 public:
@@ -963,14 +969,14 @@ enum class Type { TEXT, IMAGE, TEXT_AND_IMAGE };
 struct DiffInfo
 {
     DiffInfo(std::string program, Type type) :
-        program(program),
+        program(std::move(program)),
         arguments("%s %s"),
         type(type)
     {
     }
     DiffInfo(std::string program, std::string arguments, Type type) :
-        program(program),
-        arguments(arguments),
+        program(std::move(program)),
+        arguments(std::move(arguments)),
         type(type)
     {
     }
@@ -1084,11 +1090,11 @@ class GenericDiffReporter : public CommandReporter {
 private:
     SystemLauncher launcher;
 public:
-    GenericDiffReporter(const std::string& program) : CommandReporter(program, &launcher)
+    explicit GenericDiffReporter(const std::string& program) : CommandReporter(program, &launcher)
     {
         checkForCygwin();
     }
-    GenericDiffReporter(const DiffInfo& info) : CommandReporter(info.getProgramForOs().c_str(), &launcher)
+    explicit GenericDiffReporter(const DiffInfo& info) : CommandReporter(info.getProgramForOs(), &launcher)
     {
         checkForCygwin();
     }
@@ -1138,7 +1144,7 @@ private:
     std::vector< std::unique_ptr<Reporter> > reporters;
 public:
     
-    FirstWorkingReporter(std::vector<Reporter*> theReporters)
+    explicit FirstWorkingReporter(const std::vector<Reporter*>& theReporters)
     {
         for(auto r : theReporters)
         {
@@ -1172,12 +1178,12 @@ namespace Linux
 {
     class KDiff3Reporter : public GenericDiffReporter {
     public:
-        KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Linux::KDIFF3()) {};
+        KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Linux::KDIFF3()) {}
     };
 
     class MeldReporter : public GenericDiffReporter {
     public:
-        MeldReporter() : GenericDiffReporter(DiffPrograms::Linux::MELD()) {};
+        MeldReporter() : GenericDiffReporter(DiffPrograms::Linux::MELD()) {}
     };
 
     class LinuxDiffReporter : public FirstWorkingReporter
@@ -1273,17 +1279,17 @@ namespace ApprovalTests {
 namespace Windows {
     class BeyondCompare3Reporter : public GenericDiffReporter {
     public:
-        BeyondCompare3Reporter() : GenericDiffReporter(DiffPrograms::Windows::BEYOND_COMPARE_3()) {};
+        BeyondCompare3Reporter() : GenericDiffReporter(DiffPrograms::Windows::BEYOND_COMPARE_3()) {}
     };
 
   class VisualStudioCodeReporter : public GenericDiffReporter {
     public:
-      VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Windows::VS_CODE()) {};
+      VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Windows::VS_CODE()) {}
     };
 
     class BeyondCompare4Reporter : public GenericDiffReporter {
     public:
-        BeyondCompare4Reporter() : GenericDiffReporter(DiffPrograms::Windows::BEYOND_COMPARE_4()) {};
+        BeyondCompare4Reporter() : GenericDiffReporter(DiffPrograms::Windows::BEYOND_COMPARE_4()) {}
     };
 
     class BeyondCompareReporter : public FirstWorkingReporter {
@@ -1294,12 +1300,12 @@ namespace Windows {
 
     class TortoiseImageDiffReporter : public GenericDiffReporter {
     public:
-        TortoiseImageDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_IMAGE_DIFF()) {};
+        TortoiseImageDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_IMAGE_DIFF()) {}
     };
 
     class TortoiseTextDiffReporter : public GenericDiffReporter {
     public:
-        TortoiseTextDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_TEXT_DIFF()) {};
+        TortoiseTextDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_TEXT_DIFF()) {}
     };
 
     class TortoiseDiffReporter : public FirstWorkingReporter {
@@ -1311,22 +1317,22 @@ namespace Windows {
 
     class WinMergeReporter : public GenericDiffReporter {
     public:
-        WinMergeReporter() : GenericDiffReporter(DiffPrograms::Windows::WIN_MERGE_REPORTER()) {};
+        WinMergeReporter() : GenericDiffReporter(DiffPrograms::Windows::WIN_MERGE_REPORTER()) {}
     };
 
     class AraxisMergeReporter : public GenericDiffReporter {
     public:
-        AraxisMergeReporter() : GenericDiffReporter(DiffPrograms::Windows::ARAXIS_MERGE()) {};
+        AraxisMergeReporter() : GenericDiffReporter(DiffPrograms::Windows::ARAXIS_MERGE()) {}
     };
 
     class CodeCompareReporter : public GenericDiffReporter {
     public:
-        CodeCompareReporter() : GenericDiffReporter(DiffPrograms::Windows::CODE_COMPARE()) {};
+        CodeCompareReporter() : GenericDiffReporter(DiffPrograms::Windows::CODE_COMPARE()) {}
     };
 
     class KDiff3Reporter : public GenericDiffReporter {
     public:
-        KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Windows::KDIFF3()) {};
+        KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Windows::KDIFF3()) {}
     };
 
     class WindowsDiffReporter : public FirstWorkingReporter {
@@ -1473,7 +1479,7 @@ public:
     explicit SubdirectoryDisposer(std::string subdirectory)
     {
         previous_result = ApprovalTestNamer::testConfiguration().subdirectory;
-        ApprovalTestNamer::testConfiguration().subdirectory = subdirectory;
+        ApprovalTestNamer::testConfiguration().subdirectory = std::move(subdirectory);
     }
 
     ~SubdirectoryDisposer()
@@ -1493,7 +1499,7 @@ public:
 
 namespace ApprovalTests {
 
-typedef std::function<std::shared_ptr<ApprovalNamer>()> NamerCreator;
+    using NamerCreator = std::function<std::shared_ptr<ApprovalNamer>()>;
 
 
 class DefaultNamerFactory
@@ -1517,7 +1523,7 @@ public:
     
     static void setDefaultNamer( NamerCreator namer)
     {
-        defaultNamerContainer().at(0) = namer;
+        defaultNamerContainer().at(0) = std::move(namer);
     }
 
 };
@@ -1534,7 +1540,7 @@ namespace ApprovalTests {
 class ExistingFileNamer: public ApprovalNamer{
     std::string filePath;
 public:
-    ExistingFileNamer(std::string filePath): filePath(filePath){
+    explicit ExistingFileNamer(std::string filePath): filePath(std::move(filePath)){
 
     }
     virtual std::string getApprovedFile(std::string extensionWithDot) const override {
@@ -1564,7 +1570,7 @@ public:
     explicit DefaultNamerDisposer(NamerCreator namerCreator)
     {
         previous_result = DefaultNamerFactory::getDefaultNamer();
-        DefaultNamerFactory::setDefaultNamer(namerCreator);
+        DefaultNamerFactory::setDefaultNamer(std::move(namerCreator));
     }
 
     ~DefaultNamerDisposer()
@@ -1576,19 +1582,98 @@ public:
 
 #endif 
 
+ // ******************** From: QuietReporter.h
+#ifndef APPROVALTESTS_CPP_QUIETREPORTER_H
+#define APPROVALTESTS_CPP_QUIETREPORTER_H
+
+
+namespace ApprovalTests {
+
+class QuietReporter : public Reporter
+{
+public:
+    bool report(std::string , std::string ) const override
+    {
+        return true;
+    }
+};
+}
+
+#endif 
+
+ // ******************** From: CIBuildOnlyReporter.h
+#ifndef APPROVALTESTS_CPP_CIBUILDONLYREPORTER_H
+#define APPROVALTESTS_CPP_CIBUILDONLYREPORTER_H
+
+
+
+namespace ApprovalTests
+{
+    
+    class CIBuildOnlyReporter : public Reporter
+    {
+    private:
+        std::shared_ptr<Reporter> m_reporter;
+
+    public:
+        explicit CIBuildOnlyReporter(std::shared_ptr<Reporter> reporter = std::make_shared<QuietReporter>())
+            : m_reporter(reporter)
+        {
+        }
+
+        bool report(std::string received, std::string approved) const override
+        {
+            if (!isRunningUnderCI())
+            {
+                return false;
+            }
+            m_reporter->report(received, approved);
+            
+            
+            return true;
+        }
+
+        static bool isRunningUnderCI()
+        {
+            
+            auto environmentVariablesForCI = {
+                    
+                    "CI",
+                    "CONTINUOUS_INTEGRATION",
+                    "GO_SERVER_URL",
+                    "JENKINS_URL",
+                    "TEAMCITY_VERSION"
+                    
+            };
+            for (const auto& variable : environmentVariablesForCI)
+            {
+                if (!SystemUtils::safeGetEnv(variable).empty())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+} 
+
+#endif 
+
  // ******************** From: DefaultFrontLoadedReporter.h
 #ifndef APPROVALTESTS_CPP_DEFAULTFRONTLOADEDREPORTER_H
 #define APPROVALTESTS_CPP_DEFAULTFRONTLOADEDREPORTER_H
 
 
 namespace ApprovalTests {
-
-class DefaultFrontLoadedReporter : public Reporter
+class DefaultFrontLoadedReporter : public FirstWorkingReporter
 {
 public:
-    virtual bool report(std::string , std::string ) const override
+    DefaultFrontLoadedReporter() : FirstWorkingReporter(
+        {
+            new CIBuildOnlyReporter()
+        }
+    )
     {
-        return false;
     }
 };
 }
@@ -1669,7 +1754,7 @@ class ApprovalException : public std::exception
 private:
     std::string message;
 public:
-    ApprovalException( const std::string& msg ) : message( msg ) {}
+    explicit ApprovalException( const std::string& msg ) : message( msg ) {}
 
     virtual const char *what() const noexcept override
     {
@@ -1690,7 +1775,7 @@ private:
         return s.str();
     }
 public:
-    ApprovalMismatchException( std::string received, std::string approved )
+    ApprovalMismatchException(const std::string& received, const std::string& approved )
         : ApprovalException( format( received, approved ) )
     {
     }
@@ -1708,7 +1793,7 @@ private:
         return s.str();
     }
 public:
-    ApprovalMissingException( std::string , std::string approved )
+    ApprovalMissingException(const std::string& , const std::string& approved )
         : ApprovalException( format( approved ) )
     {
     }
@@ -1795,12 +1880,12 @@ public:
 
     ~FileApprover() = default;
 
-    static void registerComparator(std::string extensionWithDot, std::shared_ptr<ApprovalComparator> comparator)
+    static void registerComparator(const std::string& extensionWithDot, std::shared_ptr<ApprovalComparator> comparator)
     {
         comparators()[extensionWithDot] = comparator;
     }
 
-    static std::shared_ptr<ApprovalComparator> getComparatorForFile(std::string receivedPath) {
+    static std::shared_ptr<ApprovalComparator> getComparatorForFile(const std::string& receivedPath) {
         const std::string fileExtension = FileUtils::getExtensionWithDot(receivedPath);
         auto iterator = comparators().find(fileExtension);
         if (iterator != comparators().end()) {
@@ -1810,8 +1895,8 @@ public:
     }
 
     
-    static void verify(std::string receivedPath,
-                       std::string approvedPath,
+    static void verify(const std::string& receivedPath,
+                       const std::string& approvedPath,
                        const ApprovalComparator& comparator) {
         if (!FileUtils::fileExists(approvedPath)) {
             throw ApprovalMissingException(receivedPath, approvedPath);
@@ -1826,8 +1911,8 @@ public:
         }
     }
 
-    static void verify(std::string receivedPath,
-                       std::string approvedPath) {
+    static void verify(const std::string& receivedPath,
+                       const std::string& approvedPath) {
         verify(receivedPath, approvedPath, *getComparatorForFile(receivedPath));
     }
 
@@ -1881,14 +1966,34 @@ public:
     }
 
     static void verify(std::string contents, const Reporter &reporter = DefaultReporter()) {
-        StringWriter writer(contents);
-        ApprovalTestNamer namer;
-        FileApprover::verify(namer, writer, reporter);
+        verifyWithExtension(contents, ".txt", reporter);
+    }
+
+    static void verifyWithExtension(std::string contents, const std::string& fileExtensionWithDot, const Reporter &reporter = DefaultReporter()) {
+        StringWriter writer(contents, fileExtensionWithDot);
+        FileApprover::verify(*getDefaultNamer(), writer, reporter);
+    }
+
+    static void verify(const ApprovalWriter& writer, const Reporter &reporter = DefaultReporter())
+    {
+        FileApprover::verify(*getDefaultNamer(), writer, reporter);
     }
 
     template<typename T>
+    using IsNotDerivedFromWriter = typename std::enable_if<!std::is_base_of<ApprovalWriter, T>::value, int>::type;
+
+    template<
+            typename T,
+            typename = IsNotDerivedFromWriter<T>>
     static void verify(const T& contents, const Reporter &reporter = DefaultReporter()) {
         verify(StringUtils::toString(contents), reporter);
+    }
+
+    template<
+            typename T,
+            typename = IsNotDerivedFromWriter<T>>
+    static void verifyWithExtension(const T& contents, const std::string& fileExtensionWithDot, const Reporter &reporter = DefaultReporter()) {
+        verifyWithExtension(StringUtils::toString(contents), fileExtensionWithDot, reporter);
     }
 
     template<
@@ -1904,6 +2009,20 @@ public:
         verify(s.str(), reporter);
     }
 
+    template<
+        typename T,
+        typename Function,
+        typename = IsNotDerivedFromReporter<Function>>
+    static void verifyWithExtension(const T& contents,
+                       Function converter,
+                       const std::string& fileExtensionWithDot,
+                       const Reporter &reporter = DefaultReporter())
+    {
+        std::stringstream s;
+        converter(contents, s);
+        verifyWithExtension(s.str(), fileExtensionWithDot, reporter);
+    }
+
     static void verifyExceptionMessage(
         std::function<void(void)> functionThatThrows,
         const Reporter &reporter = DefaultReporter())
@@ -1917,7 +2036,7 @@ public:
         {
             message = e.what();
         }
-        Approvals::verify(message, reporter);
+        verify(message, reporter);
     }
 
     template<typename Iterator>
@@ -2470,12 +2589,12 @@ namespace {
         TestName currentTest;
 
         // constructor has to accept the ContextOptions by ref as a single argument
-        DocTestApprovalListener(const doctest::ContextOptions & /*in*/) {
+        explicit DocTestApprovalListener(const doctest::ContextOptions & /*in*/) {
         }
 
         void test_case_start(const doctest::TestCaseData &testInfo) override {
 
-            currentTest.sections.push_back(testInfo.m_name);
+            currentTest.sections.emplace_back(testInfo.m_name);
             currentTest.setFileName(testInfo.m_file);
             ApprovalTestNamer::currentTest(&currentTest);
         }
@@ -2489,7 +2608,7 @@ namespace {
 
         void subcase_start(const doctest::SubcaseSignature &signature) override {
 
-            currentTest.sections.push_back(signature.m_name);
+            currentTest.sections.emplace_back(signature.m_name);
         }
 
         void subcase_end() override {
@@ -2562,7 +2681,7 @@ public:
 #include "gtest/gtest.h"
 
 namespace ApprovalTests {
-class GoogleTestListener : public ::testing::EmptyTestEventListener
+class GoogleTestListener : public testing::EmptyTestEventListener
 {
     TestName currentTest;
 public:
@@ -2578,17 +2697,17 @@ public:
         return false;
     }
 
-    virtual void OnTestStart(const ::testing::TestInfo& testInfo) override
+    virtual void OnTestStart(const testing::TestInfo& testInfo) override
     {
         currentTest.setFileName(testInfo.file());
         currentTest.sections = {};
         if (! isDuplicate(currentTest.getFileName(), testInfo.test_case_name()))
         {
-            currentTest.sections.push_back(testInfo.test_case_name());
+            currentTest.sections.emplace_back(testInfo.test_case_name());
         }
         if (! std::string(testInfo.name()).empty())
         {
-            currentTest.sections.push_back(testInfo.name());
+            currentTest.sections.emplace_back(testInfo.name());
         }
         
         ApprovalTestNamer::currentTest(&currentTest);
@@ -2623,7 +2742,7 @@ int main(int argc, char** argv)
 namespace ApprovalTests {
 struct NamerFactory
 {
-    static SectionNameDisposer appendToOutputFilename(std::string sectionName)
+    static SectionNameDisposer appendToOutputFilename(const std::string& sectionName)
     {
         return SectionNameDisposer(ApprovalTestNamer::currentTest(), sectionName);
     }
@@ -2643,7 +2762,7 @@ class SeparateApprovedAndReceivedDirectoriesNamer : public ApprovalTestNamer
 public:
     virtual ~SeparateApprovedAndReceivedDirectoriesNamer() = default;
 
-    std::string getFullFileNameWithExtraDirectory(std::string approved, std::string extensionWithDot) const
+    std::string getFullFileNameWithExtraDirectory(const std::string& approved, const std::string& extensionWithDot) const
     {
         std::string outputDirectory = getDirectory() +  approved;
         SystemUtils::ensureDirectoryExists(outputDirectory);
@@ -2711,7 +2830,7 @@ private:
     BlockingReporter() = delete;
 
 public:
-    BlockingReporter( std::shared_ptr<Blocker> blocker ) : blocker(blocker)
+    explicit BlockingReporter( std::shared_ptr<Blocker> blocker ) : blocker(std::move(blocker))
     {
     }
 
@@ -2736,6 +2855,25 @@ public:
 
 #endif 
 
+ // ******************** From: CIBuildOnlyReporterUtils.h
+#ifndef APPROVALTESTS_CPP_CIBUILDONLYREPORTERUTILS_H
+#define APPROVALTESTS_CPP_CIBUILDONLYREPORTERUTILS_H
+
+
+namespace ApprovalTests
+{
+    namespace CIBuildOnlyReporterUtils
+    {
+        inline FrontLoadedReporterDisposer useAsFrontLoadedReporter(const std::shared_ptr<Reporter>& reporter)
+        {
+            return Approvals::useAsFrontLoadedReporter(
+                    std::make_shared<ApprovalTests::CIBuildOnlyReporter>( reporter ));
+        }
+    }
+} 
+
+#endif 
+
  // ******************** From: ClipboardReporter.h
 #ifndef APPROVALTESTS_CPP_COMMANDLINEREPORTER_H
 #define APPROVALTESTS_CPP_COMMANDLINEREPORTER_H
@@ -2746,7 +2884,7 @@ public:
 namespace ApprovalTests {
 class ClipboardReporter : public Reporter {
 public:
-    static std::string getCommandLineFor(std::string received, std::string approved, bool isWindows)
+    static std::string getCommandLineFor(const std::string& received, const std::string& approved, bool isWindows)
     {
         if (isWindows) {
             return std::string("move /Y ") + "\"" + received + "\" \"" + approved + "\"";
@@ -2785,7 +2923,7 @@ private:
     std::vector< std::unique_ptr<Reporter> > reporters;
 public:
     
-    CombinationReporter(std::vector<Reporter*> theReporters)
+    explicit CombinationReporter(const std::vector<Reporter*>& theReporters)
     {
         for(auto r : theReporters)
         {
@@ -2807,19 +2945,51 @@ public:
 
 #endif 
 
- // ******************** From: QuietReporter.h
-#ifndef APPROVALTESTS_CPP_QUIETREPORTER_H
-#define APPROVALTESTS_CPP_QUIETREPORTER_H
+ // ******************** From: ExceptionCollector.h
+#ifndef APPROVALTESTS_CPP_EXCEPTIONCOLLECTOR_H
+#define APPROVALTESTS_CPP_EXCEPTIONCOLLECTOR_H
 
 
 namespace ApprovalTests {
-
-class QuietReporter : public Reporter
+class ExceptionCollector
 {
+    std::vector<std::string> exceptionMessages;
+
 public:
-    bool report(std::string , std::string ) const override
+    void gather(std::function<void(void)> functionThatThrows)
     {
-        return true;
+        try
+        {
+            functionThatThrows();
+        }
+        catch(const std::exception& e)
+        {
+            exceptionMessages.emplace_back(e.what());
+        }
+    }
+    ~ExceptionCollector()
+    {
+        if ( ! exceptionMessages.empty())
+        {
+            exceptionMessages.emplace_back("ERROR: Calling code forgot to call exceptionCollector.release()");
+        }
+        release();
+    }
+
+    void release()
+    {
+        if (! exceptionMessages.empty())
+        {
+            std::stringstream s;
+            s << exceptionMessages.size() << " exceptions were thrown:\n\n";
+            int count = 1;
+            for( const auto& error : exceptionMessages)
+            {
+                s << count++ << ") " << error << '\n';
+            }
+            exceptionMessages.clear();
+            throw std::runtime_error(s.str());
+        }
     }
 };
 }
