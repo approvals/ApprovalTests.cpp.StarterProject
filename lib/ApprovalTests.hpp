@@ -1,1 +1,1 @@
-#include "ApprovalTests.v.5.1.0.hpp"
+#include "ApprovalTests.v.6.0.0.hpp"
