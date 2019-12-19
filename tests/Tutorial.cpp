@@ -1,5 +1,5 @@
 #include "ApprovalTests.hpp"
-#include "Catch.hpp"
+#include "catch.hpp"
 
 // See the tutorial at:
 //   https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/Tutorial.md#top
