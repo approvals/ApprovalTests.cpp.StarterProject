@@ -1,12 +1,12 @@
-// Approval Tests version v.6.0.0
+// Approval Tests version v.7.0.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 #include <string>
+#include <algorithm>
+#include <sstream>
 #include <fstream>
 #include <stdexcept>
 #include <utility>
 #include <sys/stat.h>
-#include <algorithm>
-#include <sstream>
 #include <iostream>
 #include <stack>
 #include <vector>
@@ -31,6 +31,60 @@ public:
 };
 }
 
+#endif 
+
+ // ******************** From: StringUtils.h
+
+
+#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
+#define APPROVALTESTS_CPP_STRINGUTILS_H
+
+
+namespace ApprovalTests {
+class StringUtils
+{
+public:
+    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
+        size_t start_pos = 0;
+        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
+            inText.replace(start_pos, find.length(), replaceWith);
+            start_pos += replaceWith.length(); 
+        }
+        return inText;
+    }
+
+    static bool contains(const std::string& inText, const std::string& find)
+    {
+        return inText.find(find, 0) != std::string::npos;
+    }
+
+    static std::string toLower(std::string inText)
+    {
+        std::string copy(inText);
+        std::transform(inText.begin(), inText.end(), copy.begin(),
+          [](char c){ return static_cast<char>(tolower(c)); });
+        return copy;
+    }
+
+    static bool endsWith(std::string value, std::string ending)
+    {
+        if (ending.size() > value.size())
+        {
+            return false;
+        }
+        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+    }
+
+    template<typename T>
+    static std::string toString(const T& contents)
+    {
+        std::stringstream s;
+        s << contents;
+        return s.str();
+    }
+
+};
+}
 #endif 
 
  // ******************** From: Macros.h
@@ -202,60 +256,6 @@ public:
 
 #endif 
 
- // ******************** From: StringUtils.h
-
-
-#ifndef APPROVALTESTS_CPP_STRINGUTILS_H
-#define APPROVALTESTS_CPP_STRINGUTILS_H
-
-
-namespace ApprovalTests {
-class StringUtils
-{
-public:
-    static std::string replaceAll(std::string inText, const std::string& find, const std::string& replaceWith) {
-        size_t start_pos = 0;
-        while ((start_pos = inText.find(find, start_pos)) != std::string::npos) {
-            inText.replace(start_pos, find.length(), replaceWith);
-            start_pos += replaceWith.length(); 
-        }
-        return inText;
-    }
-
-    static bool contains(const std::string& inText, const std::string& find)
-    {
-        return inText.find(find, 0) != std::string::npos;
-    }
-
-    static std::string toLower(std::string inText)
-    {
-        std::string copy(inText);
-        std::transform(inText.begin(), inText.end(), copy.begin(),
-          [](char c){ return static_cast<char>(tolower(c)); });
-        return copy;
-    }
-
-    static bool endsWith(std::string value, std::string ending)
-    {
-        if (ending.size() > value.size())
-        {
-            return false;
-        }
-        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-    }
-
-    template<typename T>
-    static std::string toString(const T& contents)
-    {
-        std::stringstream s;
-        s << contents;
-        return s.str();
-    }
-
-};
-}
-#endif 
-
  // ******************** From: SystemUtils.h
 #ifndef APPROVALTESTS_CPP_SYSTEMUTILS_H
 #define APPROVALTESTS_CPP_SYSTEMUTILS_H
@@ -294,6 +294,14 @@ public:
         return true;
 #else
         return false;
+#endif
+    }
+
+    static bool isMacOs() {
+#ifdef __APPLE__
+      return true;
+#else
+      return false;
 #endif
     }
 
@@ -507,9 +515,12 @@ public:
     virtual bool report(std::string received, std::string approved) const = 0;
 };
 
+namespace Detail 
+{
 
-template<typename T>
-using IsNotDerivedFromReporter = typename std::enable_if<!std::is_base_of<Reporter, T>::value, int>::type;
+template<typename T, typename R = void>
+using EnableIfNotDerivedFromReporter = typename std::enable_if<!std::is_base_of<Reporter, typename std::decay<T>::type>::value, R>::type;
+} 
 }
 
 #endif
@@ -534,6 +545,76 @@ public:
 }
 
 #endif
+
+ // ******************** From: HelpMessages.h
+#ifndef APPROVALTESTS_CPP_HELPMESSAGES_H
+#define APPROVALTESTS_CPP_HELPMESSAGES_H
+
+
+// <SingleHpp unalterable>
+namespace ApprovalTests {
+    class HelpMessages {
+    public:
+
+        static std::string getMisconfiguredBuildHelp(const std::string& fileName)
+        {
+            std::string lineBreak = "************************************************************************************n";
+            std::string lineBuffer = "*                                                                                  *n";
+            std::string helpMessage =
+                    "nn" + lineBreak + lineBuffer +
+                    R"(* Welcome to Approval Tests.
+*
+* There seems to be a problem with your build configuration.
+* We cannot find the test source file at:
+*   [fileName]
+*
+* For details on how to fix this, please visit:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/TroubleshootingMisconfiguredBuild.md
+)" +
+                    lineBuffer + lineBreak + 'n';
+            return StringUtils::replaceAll(helpMessage, "[fileName]", fileName);
+        }
+        static std::string getMisconfiguredMainHelp()
+        {
+            std::string lineBreak = "************************************************************************************n";
+            std::string lineBuffer = "*                                                                                  *n";
+            std::string helpMessage =
+                    "nn" + lineBreak + lineBuffer +
+                    R"(* Welcome to Approval Tests.
+*
+* You have forgotten to configure your test framework for Approval Tests.
+*
+* To do this in Catch, add the following to your main.cpp:
+*
+*     #define APPROVALS_CATCH
+*     #include "ApprovalTests.hpp"
+*
+* To do this in Google Test, add the following to your main.cpp:
+*
+*     #define APPROVALS_GOOGLETEST
+*     #include "ApprovalTests.hpp"
+*
+* To do this in doctest, add the following to your main.cpp:
+*
+*     #define APPROVALS_DOCTEST
+*     #include "ApprovalTests.hpp"
+*
+* To do this in [Boost].UT, add the following to your main.cpp:
+*
+*     #define APPROVALS_UT
+*     #include "ApprovalTests.hpp"
+*
+* For more information, please visit:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
+)" +
+                    lineBuffer + lineBreak + 'n';
+            return helpMessage;
+        }
+    };
+}
+// </SingleHpp>
+
+#endif 
 
  // ******************** From: ApprovalNamer.h
 #ifndef APPROVALTESTS_CPP_APPROVALNAMER_H
@@ -562,11 +643,26 @@ namespace ApprovalTests {
 class TestName {
 public:
     const std::string& getFileName() const {
+        checkBuildConfiguration(fileName);
         return fileName;
     }
 
     void setFileName(const std::string &file) {
         fileName = SystemUtils::checkFilenameCase(file);
+    }
+
+private:
+    static void checkBuildConfiguration(const std::string& fileName) {
+        if(! FileUtils::fileExists(fileName))
+        {
+            throw std::runtime_error(getMisconfiguredBuildHelp(fileName));
+        }
+    }
+
+public:
+    static std::string getMisconfiguredBuildHelp(const std::string& fileName)
+    {
+        return HelpMessages::getMisconfiguredBuildHelp(fileName);
     }
 
     std::vector<std::string> sections;
@@ -633,39 +729,10 @@ public:
         }
     }
 
-// <SingleHpp unalterable>
     static std::string getMisconfiguredMainHelp()
     {
-        std::string lineBreak = "************************************************************************************n";
-        std::string lineBuffer = "*                                                                                  *n";
-        std::string helpMessage =
-                "nn" + lineBreak + lineBuffer +
-R"(* Welcome to Approval Tests.
-*
-* You have forgotten to configure your test framework for Approval Tests.
-*
-* To do this in Catch, add the following to your main.cpp:
-*
-*     #define APPROVALS_CATCH
-*     #include "ApprovalTests.hpp"
-*
-* To do this in Google Test, add the following to your main.cpp:
-*
-*     #define APPROVALS_GOOGLETEST
-*     #include "ApprovalTests.hpp"
-*
-* To do this in doctest, add the following to your main.cpp:
-*
-*     #define APPROVALS_DOCTEST
-*     #include "ApprovalTests.hpp"
-*
-* For more information, please visit:
-* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/GettingStarted.md
-)" +
-                    lineBuffer + lineBreak + 'n';
-        return helpMessage;
+        return HelpMessages::getMisconfiguredMainHelp();
     }
-// </SingleHpp>
 
 
     
@@ -1196,7 +1263,7 @@ struct DiffInfo
 
 
 #define APPROVAL_TESTS_MACROS_ENTRY(name, defaultValue) \
-        static DiffInfo name() { return defaultValue; }
+        inline DiffInfo name() { return defaultValue; }
 
 
 namespace ApprovalTests {
@@ -1234,6 +1301,11 @@ namespace DiffPrograms {
               DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseIDiff.exe", "/left:%s /right:%s", Type::IMAGE))
 
         APPROVAL_TESTS_MACROS_ENTRY(TORTOISE_TEXT_DIFF, DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseMerge.exe", Type::TEXT))
+
+        APPROVAL_TESTS_MACROS_ENTRY(TORTOISE_GIT_IMAGE_DIFF,
+              DiffInfo("{ProgramFiles}TortoiseGit\\bin\\TortoiseGitIDiff.exe", "/left:%s /right:%s", Type::IMAGE))
+
+        APPROVAL_TESTS_MACROS_ENTRY(TORTOISE_GIT_TEXT_DIFF, DiffInfo("{ProgramFiles}TortoiseGit\\bin\\TortoiseGitMerge.exe", Type::TEXT))
 
         APPROVAL_TESTS_MACROS_ENTRY(WIN_MERGE_REPORTER, DiffInfo("{ProgramFiles}WinMerge\\WinMergeU.exe", Type::TEXT_AND_IMAGE))
 
@@ -1447,14 +1519,16 @@ namespace Mac {
 
 namespace ApprovalTests {
 namespace Windows {
+
+    class VisualStudioCodeReporter : public GenericDiffReporter {
+    public:
+        VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Windows::VS_CODE()) {}
+    };
+
+    
     class BeyondCompare3Reporter : public GenericDiffReporter {
     public:
         BeyondCompare3Reporter() : GenericDiffReporter(DiffPrograms::Windows::BEYOND_COMPARE_3()) {}
-    };
-
-  class VisualStudioCodeReporter : public GenericDiffReporter {
-    public:
-      VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Windows::VS_CODE()) {}
     };
 
     class BeyondCompare4Reporter : public GenericDiffReporter {
@@ -1468,6 +1542,7 @@ namespace Windows {
         }
     };
 
+    
     class TortoiseImageDiffReporter : public GenericDiffReporter {
     public:
         TortoiseImageDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_IMAGE_DIFF()) {}
@@ -1485,6 +1560,25 @@ namespace Windows {
         }
     };
 
+    
+    class TortoiseGitTextDiffReporter : public GenericDiffReporter {
+        public:
+        TortoiseGitTextDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_GIT_TEXT_DIFF()) {}
+    };
+
+    class TortoiseGitImageDiffReporter : public GenericDiffReporter {
+        public:
+        TortoiseGitImageDiffReporter() : GenericDiffReporter(DiffPrograms::Windows::TORTOISE_GIT_IMAGE_DIFF()) {}
+    };
+
+    class TortoiseGitDiffReporter : public FirstWorkingReporter {
+    public:
+        TortoiseGitDiffReporter() : FirstWorkingReporter(
+                {new TortoiseGitTextDiffReporter(), new TortoiseGitImageDiffReporter()}) {
+        }
+    };
+
+    
     class WinMergeReporter : public GenericDiffReporter {
     public:
         WinMergeReporter() : GenericDiffReporter(DiffPrograms::Windows::WIN_MERGE_REPORTER()) {}
@@ -1510,7 +1604,8 @@ namespace Windows {
         WindowsDiffReporter() : FirstWorkingReporter(
                 {
                         
-                        new TortoiseDiffReporter(),
+                        new TortoiseDiffReporter(), 
+                        new TortoiseGitDiffReporter(),
                         new BeyondCompareReporter(),
                         new WinMergeReporter(),
                         new AraxisMergeReporter(),
@@ -2230,7 +2325,7 @@ public:
     template<
         typename T,
         typename Function,
-        typename = IsNotDerivedFromReporter<Function>>
+        typename = Detail::EnableIfNotDerivedFromReporter<Function>>
     static void verify(const T& contents,
                        Function converter,
                        const Reporter &reporter = DefaultReporter())
@@ -2243,7 +2338,7 @@ public:
     template<
         typename T,
         typename Function,
-        typename = IsNotDerivedFromReporter<Function>>
+        typename = Detail::EnableIfNotDerivedFromReporter<Function>>
     static void verifyWithExtension(const T& contents,
                        Function converter,
                        const std::string& fileExtensionWithDot,
@@ -2350,15 +2445,6 @@ namespace CombinationApprovals {
 namespace Detail {
 
 
-
-
-template<class...> struct disjunction : std::false_type {};
-template<class B1> struct disjunction<B1> : B1 {};
-template<class B1, class... Bn>
-struct disjunction<B1, Bn...> : std::conditional<bool(B1::value), B1, disjunction<Bn...>>::type  {};
-
-
-
 struct print_input {
     std::ostream& out;
     template<class T>
@@ -2384,7 +2470,7 @@ struct serialize {
 } 
 
 template<class Converter, class Container, class... Containers>
-void verifyAllCombinations(Converter&& converter, const Reporter& reporter, const Container& input0, const Containers&... inputs)
+void verifyAllCombinations(const Reporter& reporter, Converter&& converter, const Container& input0, const Containers&... inputs)
 {
     std::stringstream s;
     CartesianProduct::cartesian_product(Detail::serialize<Converter>{s, std::forward<Converter>(converter)}, input0, inputs...);
@@ -2392,10 +2478,10 @@ void verifyAllCombinations(Converter&& converter, const Reporter& reporter, cons
 }
 
 template<class Converter, class... Containers>
-CartesianProduct::Detail::enable_if_t<!Detail::disjunction<std::is_base_of<Reporter, Containers>...>::value>
+ApprovalTests::Detail::EnableIfNotDerivedFromReporter<Converter>
 verifyAllCombinations(Converter&& converter, const Containers&... inputs)
 {
-    verifyAllCombinations(std::forward<Converter>(converter), DefaultReporter(), inputs...);
+    verifyAllCombinations(DefaultReporter(), std::forward<Converter>(converter), inputs...);
 }
 
 } 
@@ -2419,7 +2505,7 @@ verifyAllCombinations(Converter&& converter, const Containers&... inputs)
 
 #ifdef APPROVALS_CATCH
 
-#include <Catch.hpp>
+#include <catch.hpp>
 
 //namespace ApprovalTests {
 struct Catch2ApprovalListener : Catch::TestEventListenerBase {
@@ -2678,6 +2764,90 @@ int main(int argc, char** argv)
 #endif
 #endif 
 
+ // ******************** From: UTApprovals.h
+#ifndef APPROVALTESTS_CPP_UTAPPROVALS_H
+#define APPROVALTESTS_CPP_UTAPPROVALS_H
+
+
+// <SingleHpp unalterable>
+#ifdef APPROVALS_UT
+
+#if !(__GNUC__ >= 9 or __clang_major__ >= 9)
+#error "The [Boost].UT integration with Approval Tests requires source_location support by the compiler"
+#endif
+
+#include <ut.hpp>
+
+namespace ApprovalTests
+{
+    namespace cfg {
+        class reporter : public boost::ut::reporter<boost::ut::printer> {
+            private:
+                TestName currentTest;
+
+            public:
+                auto on(boost::ut::events::test_begin test_begin) -> void {
+                    std::string name = test_begin.name;
+                    currentTest.sections.emplace_back(name);
+                    currentTest.setFileName(test_begin.location.file_name());
+
+                    ApprovalTestNamer::currentTest(&currentTest);
+
+                    boost::ut::reporter<boost::ut::printer>::on(test_begin);
+                }
+
+                auto on(boost::ut::events::test_run test_run) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(test_run);
+                }
+
+                auto on(boost::ut::events::test_skip test_skip) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(test_skip);
+                }
+
+                auto on(boost::ut::events::test_end test_end) -> void {
+                    while (!currentTest.sections.empty()) {
+                        currentTest.sections.pop_back();
+                    }
+                    boost::ut::reporter<boost::ut::printer>::on(test_end);
+                }
+
+                template <class TMsg>
+                auto on(boost::ut::events::log<TMsg> log) -> void {
+                    boost::ut::reporter<boost::ut::printer>::on(log);
+                }
+
+                template <class TLocation, class TExpr>
+                auto on(boost::ut::events::assertion_pass<TLocation, TExpr> location) -> void {
+                    boost::ut::reporter<boost::ut::printer>::on(location);
+                }
+
+                template <class TLocation, class TExpr>
+                auto on(boost::ut::events::assertion_fail<TLocation, TExpr> fail) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(fail);
+                }
+
+                auto on(boost::ut::events::fatal_assertion fatal) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(fatal);
+                }
+
+                auto on(boost::ut::events::exception exception) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(exception);
+                }
+
+                auto on(boost::ut::events::summary summary) -> void { 
+                    boost::ut::reporter<boost::ut::printer>::on(summary);
+                }
+        };
+    }  // namespace cfg
+}
+
+template <>
+auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<ApprovalTests::cfg::reporter>{};
+
+#endif // APPROVALS_UT
+// </SingleHpp>
+#endif 
+
  // ******************** From: NamerFactory.h
 #ifndef APPROVALTESTS_CPP_NAMERFACTORY_H
 #define APPROVALTESTS_CPP_NAMERFACTORY_H
@@ -2847,7 +3017,19 @@ public:
     static void copyToClipboard(const std::string& newClipboard) {
         
 
-        const std::string clipboardCommand = SystemUtils::isWindowsOs() ? "clip" : "pbclip";
+        std::string clipboardCommand;
+        if (SystemUtils::isWindowsOs())
+        {
+            clipboardCommand = "clip";
+        }
+        else if (SystemUtils::isMacOs())
+        {
+            clipboardCommand = "pbcopy";
+        }
+        else
+        {
+            clipboardCommand = "pbclip";
+        }
         auto cmd = std::string("echo ") + newClipboard + " | " + clipboardCommand;
         system(cmd.c_str());
     }
