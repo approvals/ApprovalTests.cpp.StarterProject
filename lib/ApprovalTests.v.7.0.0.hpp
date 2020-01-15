@@ -2505,7 +2505,7 @@ verifyAllCombinations(Converter&& converter, const Containers&... inputs)
 
 #ifdef APPROVALS_CATCH
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 //namespace ApprovalTests {
 struct Catch2ApprovalListener : Catch::TestEventListenerBase {

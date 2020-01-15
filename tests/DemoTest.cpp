@@ -1,5 +1,5 @@
 #include "ApprovalTests.hpp"
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 #include <ostream>
 
 using namespace ApprovalTests;
