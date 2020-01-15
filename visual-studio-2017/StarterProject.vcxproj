@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../lib;../code;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../lib;../lib/catch2/include;../code;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,7 +154,8 @@
     <ClInclude Include="..\code\YourCodeGoesHere.h" />
     <ClInclude Include="..\lib\ApprovalTests.hpp" />
     <ClInclude Include="..\lib\ApprovalTests.v.7.0.0.hpp" />
-    <ClInclude Include="..\lib\Catch.hpp" />
+    <ClInclude Include="..\lib\catch2\include\catch2\catch.hpp" />
+    <ClInclude Include="..\lib\catch2\include\catch2\catch.v2.11.0.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\tests\DemoTest.cpp" />
