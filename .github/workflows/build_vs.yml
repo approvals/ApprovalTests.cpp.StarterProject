@@ -1,0 +1,17 @@
+name: build_vs
+
+on: [push, pull_request]
+
+jobs:
+  build_sln:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: build
+        run: |
+          msbuild /p:Configuration=Debug visual-studio-2017/StarterProject.sln
+
+      - name: test
+        run: |
+          visual-studio-2017\x64\Debug\StarterProject.exe
