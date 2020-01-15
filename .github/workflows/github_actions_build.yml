@@ -18,7 +18,7 @@ jobs:
       - uses: DoozyX/clang-format-lint-action@v0.5
         with:
           source: '.'
-          exclude: './third_party'
+          exclude: './lib'
           clangFormatVersion: 9
   build:
     env:
