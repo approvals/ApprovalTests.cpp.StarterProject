@@ -10,6 +10,8 @@ jobs:
 
       - name: build
         run: |
+          dir "C:\Program Files (x86)\Microsoft Visual Studio\"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
           msbuild /p:Configuration=Debug visual-studio-2017/StarterProject.sln
 
       - name: test
