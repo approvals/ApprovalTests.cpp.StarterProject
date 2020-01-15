@@ -16,18 +16,18 @@ struct Demo
 
     friend std::ostream& operator<<(std::ostream& os, const Demo& obj)
     {
-        return os
-            << "value1: " << obj.value1
-            << ", value2: " << obj.value2;
+        return os << "value1: " << obj.value1 << ", value2: " << obj.value2;
     }
 };
 
 TEST_CASE("DemoCombinationTestCase")
 {
-    std::vector<int> evens{ 2, 4, 6, 8, 10 };
-    std::vector<int> odds{ 1, 3, 5, 7, 9 };
+    std::vector<int> evens{2, 4, 6, 8, 10};
+    std::vector<int> odds{1, 3, 5, 7, 9};
     CombinationApprovals::verifyAllCombinations(
-            [](int i, int j) { return Demo{ i, j }; },
-            evens, odds);
+        [](int i, int j) {
+            return Demo{i, j};
+        },
+        evens,
+        odds);
 }
-
