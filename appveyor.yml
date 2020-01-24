@@ -3,7 +3,7 @@ environment:
   matrix:
     - TARGET: cygwin
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GENERATOR: '"Unix Makefiles"'
+      GENERATOR: '"Unix Makefiles" -DCMAKE_CXX_FLAGS_INIT=-DAPPROVALS_CATCH_DISABLE_FILE_MACRO_CHECK'
 
     - TARGET: mingw
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
