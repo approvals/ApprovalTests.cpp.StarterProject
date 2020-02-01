@@ -1,6 +1,7 @@
 # ApprovalTests.cpp.StarterProject
 
-[![Build Status](https://api.travis-ci.org/approvals/ApprovalTests.cpp.StarterProject.svg?branch=master)](https://travis-ci.org/approvals/ApprovalTests.cpp.StarterProject) [![Build Status](https://github.com/approvals/ApprovalTests.cpp.StarterProject/workflows/build/badge.svg?branch=master)](https://github.com/approvals/ApprovalTests.cpp.StarterProject/actions?query=branch%3Amaster)
+[![Build Status](https://api.travis-ci.org/approvals/ApprovalTests.cpp.StarterProject.svg?branch=master)](https://travis-ci.org/approvals/ApprovalTests.cpp.StarterProject)
+[![Build Status](https://github.com/approvals/ApprovalTests.cpp.StarterProject/workflows/build/badge.svg?branch=master)](https://github.com/approvals/ApprovalTests.cpp.StarterProject/actions?query=branch%3Amaster)
 
 This is a starter project for:
 
