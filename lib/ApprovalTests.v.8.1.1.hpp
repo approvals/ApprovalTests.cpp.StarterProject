@@ -1,4 +1,4 @@
-// Approval Tests version v.8.1.0
+// Approval Tests version v.8.1.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 #include <string>
@@ -25,8 +25,8 @@
 
 #define APPROVALTESTS_VERSION_MAJOR 8
 #define APPROVALTESTS_VERSION_MINOR 1
-#define APPROVALTESTS_VERSION_PATCH 0
-#define APPROVALTESTS_VERSION_STR "8.1.0"
+#define APPROVALTESTS_VERSION_PATCH 1
+#define APPROVALTESTS_VERSION_STR "8.1.1"
 
 #define APPROVALTESTS_VERSION                                                  \
     (APPROVALTESTS_VERSION_MAJOR * 10000 + APPROVALTESTS_VERSION_MINOR * 100 + \
