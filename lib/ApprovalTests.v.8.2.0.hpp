@@ -1,4 +1,4 @@
-// Approval Tests version v.8.1.1
+// Approval Tests version v.8.2.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 #include <string>
@@ -24,9 +24,9 @@
 #define APPROVALTESTS_CPP_APPROVALTESTSVERSION_H
 
 #define APPROVALTESTS_VERSION_MAJOR 8
-#define APPROVALTESTS_VERSION_MINOR 1
-#define APPROVALTESTS_VERSION_PATCH 1
-#define APPROVALTESTS_VERSION_STR "8.1.1"
+#define APPROVALTESTS_VERSION_MINOR 2
+#define APPROVALTESTS_VERSION_PATCH 0
+#define APPROVALTESTS_VERSION_STR "8.2.0"
 
 #define APPROVALTESTS_VERSION                                                  \
     (APPROVALTESTS_VERSION_MAJOR * 10000 + APPROVALTESTS_VERSION_MINOR * 100 + \
@@ -319,7 +319,6 @@ namespace ApprovalTests
 #ifdef _WIN32
 // ReSharper disable once CppUnusedIncludeDirective
 #include <io.h>
-#include <windows.h>
 #include <direct.h>
 #else
 // ReSharper disable once CppUnusedIncludeDirective
@@ -375,17 +374,17 @@ namespace ApprovalTests
             }
 #ifdef _WIN32
 
-            WIN32_FIND_DATAA findFileData;
-            HANDLE hFind = FindFirstFileA(fullPath.c_str(), &findFileData);
+            _finddata_t findFileData;
+            auto hFind = _findfirst(fullPath.c_str(), &findFileData);
 
-            if (hFind != INVALID_HANDLE_VALUE)
+            if (hFind != -1)
             {
-                const std::string fixedFilename = findFileData.cFileName;
+                const std::string fixedFilename = findFileData.name;
                 const std::string fixedPath =
                     StringUtils::replaceAll(fullPath,
                                             StringUtils::toLower(fixedFilename),
                                             fixedFilename);
-                FindClose(hFind);
+                _findclose(hFind);
                 return fixedPath;
             }
 
@@ -492,6 +491,17 @@ namespace ApprovalTests
                 makeDirectory(fullFilePath);
             }
         }
+
+        static void runSystemCommandOrThrow(const std::string& command)
+        {
+            int exitCode = system(command.c_str());
+
+            if (exitCode != 0)
+            {
+                throw std::runtime_error(command + ": failed with exit code " +
+                                         std::to_string(exitCode));
+            }
+        }
     };
 }
 #endif
@@ -567,9 +577,9 @@ namespace ApprovalTests
         static void copyFile(const std::string& source,
                              const std::string& destination)
         {
-            system(getCommandLineForCopy(
-                       source, destination, SystemUtils::isWindowsOs())
-                       .c_str());
+            auto cmd = getCommandLineForCopy(
+                source, destination, SystemUtils::isWindowsOs());
+            SystemUtils::runSystemCommandOrThrow(cmd);
         }
     };
 }
@@ -1340,7 +1350,7 @@ namespace ApprovalTests
             std::string launch = SystemUtils::isWindowsOs()
                                      ? ("start \"\" " + command)
                                      : (command + " &");
-            system(launch.c_str());
+            SystemUtils::runSystemCommandOrThrow(launch);
             return true;
         }
     };
@@ -2546,23 +2556,39 @@ namespace ApprovalTests
     public:
         ComparatorDisposer(
             ComparatorContainer& comparators,
-            std::string extensionWithDot,
+            const std::string& extensionWithDot,
             std::shared_ptr<ApprovalTests::ApprovalComparator>
                 previousComparator,
             std::shared_ptr<ApprovalTests::ApprovalComparator> newComparator)
             : comparators(comparators)
             , ext_(extensionWithDot)
-            , previousComparator(previousComparator)
+            , previousComparator(std::move(previousComparator))
         {
-            comparators[extensionWithDot] = newComparator;
+            comparators[extensionWithDot] = std::move(newComparator);
+        }
+
+        ComparatorDisposer(const ComparatorDisposer&) = delete;
+
+        ComparatorDisposer(ComparatorDisposer&& other) noexcept
+            : comparators(other.comparators)
+            , ext_(std::move(other.ext_))
+            , previousComparator(std::move(other.previousComparator))
+        {
+            other.isActive = false;
         }
 
         ~ComparatorDisposer()
         {
-            comparators[ext_] = previousComparator;
+            if (isActive)
+            {
+                comparators[ext_] = previousComparator;
+            }
         }
 
     private:
+        
+        
+        bool isActive = true;
         ComparatorContainer& comparators;
         std::string ext_;
         std::shared_ptr<ApprovalTests::ApprovalComparator> previousComparator;
@@ -3682,7 +3708,7 @@ namespace ApprovalTests
             }
             auto cmd =
                 std::string("echo ") + newClipboard + " | " + clipboardCommand;
-            system(cmd.c_str());
+            SystemUtils::runSystemCommandOrThrow(cmd);
         }
     };
 }
