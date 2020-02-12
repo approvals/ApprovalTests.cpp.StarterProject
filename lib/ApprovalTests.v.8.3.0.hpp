@@ -1,4 +1,4 @@
-// Approval Tests version v.8.2.0
+// Approval Tests version v.8.3.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 #include <string>
@@ -15,8 +15,8 @@
 #include <tuple>
 #include <type_traits>
 #include <cstdlib>
-#include <numeric>
 #include <memory>
+#include <numeric>
 #include <exception>
 #include <map>
  // ******************** From: ApprovalTestsVersion.h
@@ -24,9 +24,9 @@
 #define APPROVALTESTS_CPP_APPROVALTESTSVERSION_H
 
 #define APPROVALTESTS_VERSION_MAJOR 8
-#define APPROVALTESTS_VERSION_MINOR 2
+#define APPROVALTESTS_VERSION_MINOR 3
 #define APPROVALTESTS_VERSION_PATCH 0
-#define APPROVALTESTS_VERSION_STR "8.2.0"
+#define APPROVALTESTS_VERSION_STR "8.3.0"
 
 #define APPROVALTESTS_VERSION                                                  \
     (APPROVALTESTS_VERSION_MAJOR * 10000 + APPROVALTESTS_VERSION_MINOR * 100 + \
@@ -293,6 +293,34 @@ namespace ApprovalTests
         {
             std::size_t found = filePath.find_last_of('.');
             return filePath.substr(found);
+        }
+
+        static std::string readFileThrowIfMissing(const std::string& fileName)
+        {
+            std::ifstream in(fileName.c_str(), std::ios_base::in);
+            if (!in)
+            {
+                throw std::runtime_error("File does not exist: " + fileName);
+            }
+            std::stringstream written;
+            written << in.rdbuf();
+            in.close();
+
+            std::string text = written.str();
+            return text;
+        }
+
+        static std::string
+        readFileReturnEmptyIfMissing(const std::string& fileName)
+        {
+            if (FileUtils::fileExists(fileName))
+            {
+                return readFileThrowIfMissing(fileName);
+            }
+            else
+            {
+                return std::string();
+            }
         }
 
         static void writeToFile(const std::string& filePath,
@@ -1274,7 +1302,9 @@ namespace ApprovalTests
     {
     public:
         virtual ~CommandLauncher() = default;
-        virtual bool launch(std::vector<std::string> argv) = 0;
+        virtual bool launch(const std::string& commandLine) = 0;
+        virtual std::string
+        getCommandLine(const std::string& commandLine) const = 0;
     };
 }
 
@@ -1288,115 +1318,78 @@ namespace ApprovalTests
 
 namespace ApprovalTests
 {
-    using ConvertArgumentsFunctionPointer =
-        std::vector<std::string> (*)(std::vector<std::string>);
-
     class SystemLauncher : public CommandLauncher
     {
     private:
-        ConvertArgumentsFunctionPointer convertArgumentsForSystemLaunching;
+        bool useWindows_ = SystemUtils::isWindowsOs();
 
     public:
-        SystemLauncher() : SystemLauncher(doNothing)
+        bool launch(const std::string& commandLine) override
         {
-        }
+            std::string launch = getCommandLine(commandLine);
 
-        explicit SystemLauncher(
-            std::vector<std::string> (*pointer)(std::vector<std::string>))
-            : convertArgumentsForSystemLaunching(pointer)
-        {
-        }
-
-        
-        void setConvertArgumentsForSystemLaunchingFunction(
-            ConvertArgumentsFunctionPointer function)
-        {
-            convertArgumentsForSystemLaunching = function;
-        }
-
-        bool exists(const std::string& command)
-        {
-            bool foundByWhich = false;
-            if (!SystemUtils::isWindowsOs())
-            {
-                std::string which = "which " + command + " > /dev/null 2>&1";
-                int result = system(which.c_str());
-                foundByWhich = (result == 0);
-            }
-            return foundByWhich || FileUtils::fileExists(command);
-        }
-
-        static std::vector<std::string> doNothing(std::vector<std::string> argv)
-        {
-            return argv;
-        }
-
-        bool launch(std::vector<std::string> argv) override
-        {
-            if (!exists(argv.front()))
-            {
-                return false;
-            }
-
-            argv = convertArgumentsForSystemLaunching(argv);
-
-            std::string command =
-                std::accumulate(argv.begin(),
-                                argv.end(),
-                                std::string(""),
-                                [](const std::string& a, const std::string& b) {
-                                    return a + " " + "\"" + b + "\"";
-                                });
-            std::string launch = SystemUtils::isWindowsOs()
-                                     ? ("start \"\" " + command)
-                                     : (command + " &");
             SystemUtils::runSystemCommandOrThrow(launch);
             return true;
+        }
+
+        void invokeForWindows(bool useWindows)
+        {
+            useWindows_ = useWindows;
+        }
+
+        std::string
+        getCommandLine(const std::string& commandLine) const override
+        {
+            std::string launch = useWindows_ ? ("start \"\" " + commandLine)
+                                             : (commandLine + " &");
+            return launch;
         }
     };
 }
 
 #endif 
 
- // ******************** From: CommandReporter.h
-#ifndef APPROVALTESTS_CPP_COMMANDREPORTER_H
-#define APPROVALTESTS_CPP_COMMANDREPORTER_H
+ // ******************** From: ConvertForCygwin.h
+#ifndef APPROVALTESTS_CPP_CONVERTFORCYGWIN_H
+#define APPROVALTESTS_CPP_CONVERTFORCYGWIN_H
 
 
 namespace ApprovalTests
 {
-    
-    class CommandReporter : public Reporter
+    class ConvertForCygwin
     {
-    private:
-        std::string cmd;
-        CommandLauncher* l;
-
-    protected:
-        CommandReporter(std::string command, CommandLauncher* launcher)
-            : cmd(std::move(command)), l(launcher)
-        {
-        }
-
     public:
-        bool report(std::string received, std::string approved) const override
+        virtual ~ConvertForCygwin() = default;
+
+        virtual std::string convertProgramForCygwin(const std::string& filePath)
         {
-            FileUtils::ensureFileExists(approved);
-            return l->launch(getFullCommand(received, approved));
+            return "$(cygpath '" + filePath + "')";
         }
 
-        std::vector<std::string>
-        getFullCommand(const std::string& received,
-                       const std::string& approved) const
+        virtual std::string
+        convertFileArgumentForCygwin(const std::string& filePath)
         {
-            std::vector<std::string> fullCommand;
-            fullCommand.push_back(cmd);
-            fullCommand.push_back(received);
-            fullCommand.push_back(approved);
-            return fullCommand;
+            return "$(cygpath -aw '" + filePath + "')";
+        }
+    };
+
+    class DoNothing : public ConvertForCygwin
+    {
+    public:
+        std::string
+        convertProgramForCygwin(const std::string& filePath) override
+        {
+            return filePath;
+        }
+
+        std::string
+        convertFileArgumentForCygwin(const std::string& filePath) override
+        {
+            return filePath;
         }
     };
 }
+
 #endif 
 
  // ******************** From: DiffInfo.h
@@ -1415,8 +1408,30 @@ namespace ApprovalTests
 
     struct DiffInfo
     {
+        static std::string receivedFileTemplate()
+        {
+            return "{Received}";
+        }
+
+        static std::string approvedFileTemplate()
+        {
+            return "{Approved}";
+        }
+
+        static std::string programFileTemplate()
+        {
+            return "{ProgramFiles}";
+        }
+
+        static std::string getDefaultArguments()
+        {
+            return receivedFileTemplate() + ' ' + approvedFileTemplate();
+        }
+
         DiffInfo(std::string program, Type type)
-            : program(std::move(program)), arguments("%s %s"), type(type)
+            : program(std::move(program))
+            , arguments(getDefaultArguments())
+            , type(type)
         {
         }
         DiffInfo(std::string program, std::string arguments, Type type)
@@ -1432,7 +1447,7 @@ namespace ApprovalTests
         std::string getProgramForOs() const
         {
             std::string result = program;
-            if (result.rfind("{ProgramFiles}", 0) == 0)
+            if (result.rfind(programFileTemplate(), 0) == 0)
             {
                 const std::vector<const char*> envVars = {
                     "ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"};
@@ -1447,7 +1462,7 @@ namespace ApprovalTests
                     envVarValue += '\\';
 
                     auto result1 = StringUtils::replaceAll(
-                        result, "{ProgramFiles}", envVarValue);
+                        result, programFileTemplate(), envVarValue);
                     if (FileUtils::fileExists(result1))
                     {
                         return result1;
@@ -1459,6 +1474,106 @@ namespace ApprovalTests
     };
 }
 
+#endif 
+
+ // ******************** From: CommandReporter.h
+#ifndef APPROVALTESTS_CPP_COMMANDREPORTER_H
+#define APPROVALTESTS_CPP_COMMANDREPORTER_H
+
+
+namespace ApprovalTests
+{
+    
+    class CommandReporter : public Reporter
+    {
+    private:
+        std::string cmd;
+        std::string arguments = DiffInfo::getDefaultArguments();
+        CommandLauncher* l;
+        std::shared_ptr<ConvertForCygwin> converter;
+
+        std::string assembleFullCommand(const std::string& received,
+                                        const std::string& approved) const
+        {
+            auto convertedCommand =
+                '"' + converter->convertProgramForCygwin(cmd) + '"';
+            auto convertedReceived =
+                '"' + converter->convertFileArgumentForCygwin(received) + '"';
+            auto convertedApproved =
+                '"' + converter->convertFileArgumentForCygwin(approved) + '"';
+
+            std::string args;
+            args = StringUtils::replaceAll(
+                arguments, DiffInfo::receivedFileTemplate(), convertedReceived);
+            args = StringUtils::replaceAll(
+                args, DiffInfo::approvedFileTemplate(), convertedApproved);
+
+            return convertedCommand + ' ' + args;
+        }
+
+    protected:
+        CommandReporter(std::string command, CommandLauncher* launcher)
+            : cmd(std::move(command)), l(launcher)
+        {
+            checkForCygwin();
+        }
+
+        CommandReporter(std::string command,
+                        std::string args,
+                        CommandLauncher* launcher)
+            : cmd(std::move(command)), arguments(std::move(args)), l(launcher)
+        {
+            checkForCygwin();
+        }
+
+    public:
+        static bool exists(const std::string& command)
+        {
+            bool foundByWhich = false;
+            if (!SystemUtils::isWindowsOs())
+            {
+                std::string which = "which " + command + " > /dev/null 2>&1";
+                int result = system(which.c_str());
+                foundByWhich = (result == 0);
+            }
+            return foundByWhich || FileUtils::fileExists(command);
+        }
+
+        bool report(std::string received, std::string approved) const override
+        {
+            if (!exists(cmd))
+            {
+                return false;
+            }
+            FileUtils::ensureFileExists(approved);
+            return l->launch(assembleFullCommand(received, approved));
+        }
+
+        std::string getCommandLine(const std::string& received,
+                                   const std::string& approved) const
+        {
+            return l->getCommandLine(assembleFullCommand(received, approved));
+        }
+
+    public:
+        void checkForCygwin()
+        {
+            useCygwinConversions(SystemUtils::isCygwin());
+        }
+
+        void useCygwinConversions(bool useCygwin)
+        {
+            if (useCygwin)
+            {
+                converter = std::make_shared<ConvertForCygwin>();
+            }
+            else
+            {
+                converter = std::make_shared<DoNothing>();
+            }
+        }
+    };
+}
 #endif 
 
  // ******************** From: DiffPrograms.h
@@ -1484,8 +1599,16 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 DIFF_MERGE,
                 DiffInfo("/Applications/DiffMerge.app/Contents/MacOS/DiffMerge",
-                         "%s %s -nosplash",
+                         "{Received} {Approved} -nosplash",
                          Type::TEXT))
+
+            
+            APPROVAL_TESTS_MACROS_ENTRY(
+                ARAXIS_MERGE,
+                DiffInfo(
+                    "/Applications/Araxis Merge.app/Contents/Utilities/compare",
+                    Type::TEXT_AND_IMAGE))
+            
 
             APPROVAL_TESTS_MACROS_ENTRY(
                 BEYOND_COMPARE,
@@ -1501,7 +1624,7 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 KDIFF3,
                 DiffInfo("/Applications/kdiff3.app/Contents/MacOS/kdiff3",
-                         "%s %s -m",
+                         "{Received} {Approved} -m",
                          Type::TEXT))
 
             APPROVAL_TESTS_MACROS_ENTRY(
@@ -1518,9 +1641,10 @@ namespace ApprovalTests
                 VS_CODE,
                 DiffInfo("/Applications/Visual Studio "
                          "Code.app/Contents/Resources/app/bin/code",
-                         "-d %s %s",
+                         "-d {Received} {Approved}",
                          Type::TEXT))
         }
+
         namespace Linux
         {
             
@@ -1528,6 +1652,7 @@ namespace ApprovalTests
 
             APPROVAL_TESTS_MACROS_ENTRY(MELD, DiffInfo("meld", Type::TEXT))
         }
+
         namespace Windows
         {
             APPROVAL_TESTS_MACROS_ENTRY(
@@ -1543,7 +1668,7 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 TORTOISE_IMAGE_DIFF,
                 DiffInfo("{ProgramFiles}TortoiseSVN\\bin\\TortoiseIDiff.exe",
-                         "/left:%s /right:%s",
+                         "/left:{Received} /right:{Approved}",
                          Type::IMAGE))
 
             APPROVAL_TESTS_MACROS_ENTRY(
@@ -1554,7 +1679,7 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 TORTOISE_GIT_IMAGE_DIFF,
                 DiffInfo("{ProgramFiles}TortoiseGit\\bin\\TortoiseGitIDiff.exe",
-                         "/left:%s /right:%s",
+                         "/left:{Received} /right:{Approved}",
                          Type::IMAGE))
 
             APPROVAL_TESTS_MACROS_ENTRY(
@@ -1580,10 +1705,11 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 KDIFF3,
                 DiffInfo("{ProgramFiles}KDiff3\\kdiff3.exe", Type::TEXT))
+
             APPROVAL_TESTS_MACROS_ENTRY(
                 VS_CODE,
                 DiffInfo("{ProgramFiles}Microsoft VS Code\\Code.exe",
-                         "-d %s %s",
+                         "-d {Received} {Approved}",
                          Type::TEXT))
         }
     }
@@ -1600,50 +1726,18 @@ namespace ApprovalTests
 {
     class GenericDiffReporter : public CommandReporter
     {
-    private:
+    public:
         SystemLauncher launcher;
 
     public:
         explicit GenericDiffReporter(const std::string& program)
             : CommandReporter(program, &launcher)
         {
-            checkForCygwin();
         }
+
         explicit GenericDiffReporter(const DiffInfo& info)
-            : CommandReporter(info.getProgramForOs(), &launcher)
+            : CommandReporter(info.getProgramForOs(), info.arguments, &launcher)
         {
-            checkForCygwin();
-        }
-
-        void checkForCygwin()
-        {
-            if (SystemUtils::isCygwin())
-            {
-                launcher.setConvertArgumentsForSystemLaunchingFunction(
-                    convertForCygwin);
-            }
-        }
-
-        static std::vector<std::string>
-        convertForCygwin(std::vector<std::string> argv)
-        {
-            if (!SystemUtils::isCygwin())
-            {
-                return argv;
-            }
-            std::vector<std::string> copy = argv;
-            for (size_t i = 0; i != argv.size(); ++i)
-            {
-                if (i == 0)
-                {
-                    copy[i] = "$(cygpath '" + argv[i] + "')";
-                }
-                else
-                {
-                    copy[i] = "$(cygpath -aw '" + argv[i] + "')";
-                }
-            }
-            return copy;
         }
     };
 }
@@ -1751,6 +1845,17 @@ namespace ApprovalTests
             }
         };
 
+        
+        class AraxisMergeReporter : public GenericDiffReporter
+        {
+        public:
+            AraxisMergeReporter()
+                : GenericDiffReporter(DiffPrograms::Mac::ARAXIS_MERGE())
+            {
+            }
+        };
+        
+
         class VisualStudioCodeReporter : public GenericDiffReporter
         {
         public:
@@ -1809,6 +1914,7 @@ namespace ApprovalTests
             MacDiffReporter()
                 : FirstWorkingReporter({
                       
+                      new AraxisMergeReporter(),
                       new BeyondCompareReporter(),
                       new DiffMergeReporter(),
                       new KaleidoscopeReporter(),
@@ -2301,6 +2407,7 @@ namespace ApprovalTests
                 
                 "CI",
                 "CONTINUOUS_INTEGRATION",
+                "GITHUB_ACTIONS",
                 "GO_SERVER_URL",
                 "JENKINS_URL",
                 "TEAMCITY_VERSION"
@@ -3489,6 +3596,53 @@ auto boost::ut::cfg<boost::ut::override> =
 // </SingleHpp>
 #endif 
 
+ // ******************** From: ForegroundSystemLauncher.h
+#ifndef APPROVALTESTS_CPP_FOREGROUNDSYSTEMLAUNCHER_H
+#define APPROVALTESTS_CPP_FOREGROUNDSYSTEMLAUNCHER_H
+
+
+namespace ApprovalTests
+{
+    
+    
+    
+    
+    class ForegroundSystemLauncher : public CommandLauncher
+    {
+    public:
+        bool launch(const std::string& commandLine) override
+        {
+            std::string launch = getCommandLine(commandLine);
+
+            
+            
+            
+            
+            
+            
+            
+            
+            int exitCode = system(launch.c_str());
+            APPROVAL_TESTS_UNUSED(exitCode);
+
+            return true;
+        }
+
+        std::string
+        getCommandLine(const std::string& commandLine) const override
+        {
+            
+            const std::string launch =
+                SystemUtils::isWindowsOs()
+                    ? (std::string("cmd /S /C ") + "\"" + commandLine + "\"")
+                    : (commandLine);
+            return launch;
+        }
+    };
+} 
+
+#endif 
+
  // ******************** From: NamerFactory.h
 #ifndef APPROVALTESTS_CPP_NAMERFACTORY_H
 #define APPROVALTESTS_CPP_NAMERFACTORY_H
@@ -3748,6 +3902,113 @@ namespace ApprovalTests
         }
     };
 }
+
+#endif 
+
+ // ******************** From: ConsoleDiffReporter.h
+#ifndef APPROVALTESTS_CPP_CONSOLEDIFFREPORTER_H
+#define APPROVALTESTS_CPP_CONSOLEDIFFREPORTER_H
+
+
+
+namespace ApprovalTests
+{
+    
+    
+    
+    
+    
+    class ConsoleDiffReporter : public CommandReporter
+    {
+    private:
+        ApprovalTests::ForegroundSystemLauncher launcher;
+
+    public:
+        explicit ConsoleDiffReporter(const std::string& program)
+            : CommandReporter(program, &launcher)
+        {
+        }
+
+        explicit ConsoleDiffReporter(const DiffInfo& info)
+            : CommandReporter(info.getProgramForOs(), &launcher)
+        {
+        }
+    };
+} 
+
+#endif 
+
+ // ******************** From: CustomReporter.h
+#ifndef APPROVALTESTS_CPP_CUSTOMREPORTER_H
+#define APPROVALTESTS_CPP_CUSTOMREPORTER_H
+
+
+namespace ApprovalTests
+{
+    class CustomReporter
+    {
+    public:
+        static std::shared_ptr<GenericDiffReporter>
+        create(std::string&& path, Type type = Type::TEXT)
+        {
+            DiffInfo info(std::move(path), type);
+            return std::make_shared<GenericDiffReporter>(info);
+        }
+
+        static std::shared_ptr<GenericDiffReporter> create(
+            std::string&& path, std::string&& arguments, Type type = Type::TEXT)
+        {
+            DiffInfo info(std::move(path), std::move(arguments), type);
+            return std::make_shared<GenericDiffReporter>(info);
+        }
+    };
+}
+
+#endif 
+
+ // ******************** From: TextDiffReporter.h
+#ifndef APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
+#define APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
+
+
+
+namespace ApprovalTests
+{
+    
+    
+    
+    
+    class TextDiffReporter : public Reporter
+    {
+    private:
+        std::unique_ptr<Reporter> m_reporter;
+
+    public:
+        TextDiffReporter()
+        {
+            std::vector<Reporter*> reporters = {
+                new ConsoleDiffReporter("diff"),
+                new ConsoleDiffReporter("C:/Windows/System32/fc.exe")};
+            m_reporter =
+                std::unique_ptr<Reporter>(new FirstWorkingReporter(reporters));
+        }
+
+        bool report(std::string received, std::string approved) const override
+        {
+            std::cout << "Comparing files:" << std::endl;
+            std::cout << "received: " << received << std::endl;
+            std::cout << "approved: " << approved << std::endl;
+            const bool result = m_reporter->report(received, approved);
+            if (!result)
+            {
+                std::cout << "TextDiffReporter did not find a working diff "
+                             "program\n\n";
+            }
+
+            return result;
+        }
+    };
+} 
 
 #endif 
 
