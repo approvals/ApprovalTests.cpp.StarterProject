@@ -1,4 +1,4 @@
-// Approval Tests version v.8.3.0
+// Approval Tests version v.8.4.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 #include <string>
@@ -9,24 +9,72 @@
 #include <utility>
 #include <sys/stat.h>
 #include <iostream>
-#include <stack>
 #include <vector>
 #include <functional>
 #include <tuple>
 #include <type_traits>
-#include <cstdlib>
 #include <memory>
 #include <numeric>
+#include <cstdlib>
 #include <exception>
 #include <map>
+ // ******************** From: Reporter.h
+#ifndef APPROVALTESTS_CPP_REPORTER_H
+#define APPROVALTESTS_CPP_REPORTER_H
+
+
+namespace ApprovalTests
+{
+    
+    class Reporter
+    {
+    public:
+        virtual ~Reporter() = default;
+        virtual bool report(std::string received,
+                            std::string approved) const = 0;
+    };
+
+    namespace Detail
+    {
+        
+        template <typename T, typename R = void>
+        using EnableIfNotDerivedFromReporter = typename std::enable_if<
+            !std::is_base_of<Reporter, typename std::decay<T>::type>::value,
+            R>::type;
+    } 
+}
+
+#endif
+
+ // ******************** From: QuietReporter.h
+#ifndef APPROVALTESTS_CPP_QUIETREPORTER_H
+#define APPROVALTESTS_CPP_QUIETREPORTER_H
+
+
+namespace ApprovalTests
+{
+    
+    class QuietReporter : public Reporter
+    {
+    public:
+        bool report(std::string ,
+                    std::string ) const override
+        {
+            return true;
+        }
+    };
+}
+
+#endif 
+
  // ******************** From: ApprovalTestsVersion.h
 #ifndef APPROVALTESTS_CPP_APPROVALTESTSVERSION_H
 #define APPROVALTESTS_CPP_APPROVALTESTSVERSION_H
 
 #define APPROVALTESTS_VERSION_MAJOR 8
-#define APPROVALTESTS_VERSION_MINOR 3
+#define APPROVALTESTS_VERSION_MINOR 4
 #define APPROVALTESTS_VERSION_PATCH 0
-#define APPROVALTESTS_VERSION_STR "8.3.0"
+#define APPROVALTESTS_VERSION_STR "8.4.0"
 
 #define APPROVALTESTS_VERSION                                                  \
     (APPROVALTESTS_VERSION_MAJOR * 10000 + APPROVALTESTS_VERSION_MINOR * 100 + \
@@ -613,34 +661,6 @@ namespace ApprovalTests
 }
 #endif
 
- // ******************** From: Reporter.h
-#ifndef APPROVALTESTS_CPP_REPORTER_H
-#define APPROVALTESTS_CPP_REPORTER_H
-
-
-namespace ApprovalTests
-{
-    
-    class Reporter
-    {
-    public:
-        virtual ~Reporter() = default;
-        virtual bool report(std::string received,
-                            std::string approved) const = 0;
-    };
-
-    namespace Detail
-    {
-        
-        template <typename T, typename R = void>
-        using EnableIfNotDerivedFromReporter = typename std::enable_if<
-            !std::is_base_of<Reporter, typename std::decay<T>::type>::value,
-            R>::type;
-    } 
-}
-
-#endif
-
  // ******************** From: AutoApproveReporter.h
 #ifndef APPROVALTESTS_CPP_AUTOAPPROVEREPORTER_H
 #define APPROVALTESTS_CPP_AUTOAPPROVEREPORTER_H
@@ -1098,9 +1118,9 @@ namespace ApprovalTests
                                        std::forward<Tuple>(t),
                                        make_tuple_idxs<Tuple>{}))
             {
-                apply_impl(std::forward<F>(f),
-                           std::forward<Tuple>(t),
-                           make_tuple_idxs<Tuple>{});
+                return apply_impl(std::forward<F>(f),
+                                  std::forward<Tuple>(t),
+                                  make_tuple_idxs<Tuple>{});
             }
             
 
@@ -1290,65 +1310,6 @@ namespace ApprovalTests
 
 #endif
 
- // ******************** From: CommandLauncher.h
-#ifndef APPROVALTESTS_CPP_COMMANDLAUNCHER_H
-#define APPROVALTESTS_CPP_COMMANDLAUNCHER_H
-
-
-namespace ApprovalTests
-{
-    
-    class CommandLauncher
-    {
-    public:
-        virtual ~CommandLauncher() = default;
-        virtual bool launch(const std::string& commandLine) = 0;
-        virtual std::string
-        getCommandLine(const std::string& commandLine) const = 0;
-    };
-}
-
-#endif
-
- // ******************** From: SystemLauncher.h
-
-#ifndef APPROVALTESTS_CPP_SYSTEMLAUNCHER_H
-#define APPROVALTESTS_CPP_SYSTEMLAUNCHER_H
-
-
-namespace ApprovalTests
-{
-    class SystemLauncher : public CommandLauncher
-    {
-    private:
-        bool useWindows_ = SystemUtils::isWindowsOs();
-
-    public:
-        bool launch(const std::string& commandLine) override
-        {
-            std::string launch = getCommandLine(commandLine);
-
-            SystemUtils::runSystemCommandOrThrow(launch);
-            return true;
-        }
-
-        void invokeForWindows(bool useWindows)
-        {
-            useWindows_ = useWindows;
-        }
-
-        std::string
-        getCommandLine(const std::string& commandLine) const override
-        {
-            std::string launch = useWindows_ ? ("start \"\" " + commandLine)
-                                             : (commandLine + " &");
-            return launch;
-        }
-    };
-}
-
-#endif 
-
  // ******************** From: ConvertForCygwin.h
 #ifndef APPROVALTESTS_CPP_CONVERTFORCYGWIN_H
 #define APPROVALTESTS_CPP_CONVERTFORCYGWIN_H
@@ -1444,25 +1405,36 @@ namespace ApprovalTests
         std::string arguments;
         Type type;
 
+        static std::vector<std::string> getProgramFileLocations()
+        {
+            std::vector<std::string> possibleWindowsPaths;
+            const std::vector<const char*> envVars = {
+                "ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"};
+
+            for (const auto& envVar : envVars)
+            {
+                std::string envVarValue = SystemUtils::safeGetEnv(envVar);
+                if (!envVarValue.empty())
+                {
+                    envVarValue += '\\';
+                    possibleWindowsPaths.push_back(envVarValue);
+                }
+            }
+            return possibleWindowsPaths;
+        }
+
         std::string getProgramForOs() const
         {
             std::string result = program;
+            std::vector<std::string> possibleWindowsPaths =
+                getProgramFileLocations();
+
             if (result.rfind(programFileTemplate(), 0) == 0)
             {
-                const std::vector<const char*> envVars = {
-                    "ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"};
-
-                for (const auto& envVar : envVars)
+                for (const auto& path : possibleWindowsPaths)
                 {
-                    std::string envVarValue = SystemUtils::safeGetEnv(envVar);
-                    if (envVarValue.empty())
-                    {
-                        continue;
-                    }
-                    envVarValue += '\\';
-
                     auto result1 = StringUtils::replaceAll(
-                        result, programFileTemplate(), envVarValue);
+                        result, programFileTemplate(), path);
                     if (FileUtils::fileExists(result1))
                     {
                         return result1;
@@ -1475,6 +1447,26 @@ namespace ApprovalTests
 }
 
 #endif 
+
+ // ******************** From: CommandLauncher.h
+#ifndef APPROVALTESTS_CPP_COMMANDLAUNCHER_H
+#define APPROVALTESTS_CPP_COMMANDLAUNCHER_H
+
+
+namespace ApprovalTests
+{
+    
+    class CommandLauncher
+    {
+    public:
+        virtual ~CommandLauncher() = default;
+        virtual bool launch(const std::string& commandLine) = 0;
+        virtual std::string
+        getCommandLine(const std::string& commandLine) const = 0;
+    };
+}
+
+#endif
 
  // ******************** From: CommandReporter.h
 #ifndef APPROVALTESTS_CPP_COMMANDREPORTER_H
@@ -1561,6 +1553,7 @@ namespace ApprovalTests
             useCygwinConversions(SystemUtils::isCygwin());
         }
 
+        
         void useCygwinConversions(bool useCygwin)
         {
             if (useCygwin)
@@ -1574,6 +1567,83 @@ namespace ApprovalTests
         }
     };
 }
+#endif 
+
+ // ******************** From: SystemLauncher.h
+
+#ifndef APPROVALTESTS_CPP_SYSTEMLAUNCHER_H
+#define APPROVALTESTS_CPP_SYSTEMLAUNCHER_H
+
+
+namespace ApprovalTests
+{
+    class SystemLauncher : public CommandLauncher
+    {
+    private:
+        bool useWindows_ = SystemUtils::isWindowsOs();
+        bool isForeground_ = false;
+
+    public:
+        explicit SystemLauncher(bool isForeground = false)
+            : isForeground_(isForeground)
+        {
+        }
+
+        bool launch(const std::string& commandLine) override
+        {
+            std::string launch = getCommandLine(commandLine);
+
+            SystemUtils::runSystemCommandOrThrow(launch);
+            return true;
+        }
+
+        
+        void invokeForWindows(bool useWindows)
+        {
+            useWindows_ = useWindows;
+        }
+
+        void setForeground(bool foreground)
+        {
+            isForeground_ = foreground;
+        }
+
+        bool isForeground() const
+        {
+            return isForeground_;
+        }
+
+        std::string
+        getCommandLine(const std::string& commandLine) const override
+        {
+            std::string launch =
+                useWindows_ ? getWindowsCommandLine(commandLine, isForeground_)
+                            : getUnixCommandLine(commandLine, isForeground_);
+            return launch;
+        }
+
+        std::string getWindowsCommandLine(const std::string& commandLine,
+                                          bool foreground) const
+        {
+            std::string launch =
+                foreground
+                    ? (std::string("cmd /S /C ") + "\"" + commandLine + "\"")
+                    : ("start \"\" " + commandLine);
+
+            return launch;
+        }
+
+        std::string getUnixCommandLine(const std::string& commandLine,
+                                       bool foreground) const
+        {
+            std::string launch =
+                foreground ? commandLine : (commandLine + " &");
+
+            return launch;
+        }
+    };
+}
+
 #endif 
 
  // ******************** From: DiffPrograms.h
@@ -1754,7 +1824,7 @@ namespace ApprovalTests
     class FirstWorkingReporter : public Reporter
     {
     private:
-        std::vector<std::unique_ptr<Reporter>> reporters;
+        std::vector<std::shared_ptr<Reporter>> reporters;
 
     public:
         
@@ -1763,8 +1833,14 @@ namespace ApprovalTests
         {
             for (auto r : theReporters)
             {
-                reporters.push_back(std::unique_ptr<Reporter>(r));
+                reporters.push_back(std::shared_ptr<Reporter>(r));
             }
+        }
+
+        explicit FirstWorkingReporter(
+            const std::vector<std::shared_ptr<Reporter>>& reporters)
+        {
+            this->reporters = reporters;
         }
 
         bool report(std::string received, std::string approved) const override
@@ -2346,24 +2422,94 @@ namespace ApprovalTests
 
 #endif 
 
- // ******************** From: QuietReporter.h
-#ifndef APPROVALTESTS_CPP_QUIETREPORTER_H
-#define APPROVALTESTS_CPP_QUIETREPORTER_H
+ // ******************** From: CustomReporter.h
+#ifndef APPROVALTESTS_CPP_CUSTOMREPORTER_H
+#define APPROVALTESTS_CPP_CUSTOMREPORTER_H
+
+
+namespace ApprovalTests
+{
+    class CustomReporter
+    {
+    public:
+        static std::shared_ptr<GenericDiffReporter>
+        create(std::string path, Type type = Type::TEXT)
+        {
+            return create(
+                std::move(path), DiffInfo::getDefaultArguments(), type);
+        }
+
+        static std::shared_ptr<GenericDiffReporter>
+        create(std::string path, std::string arguments, Type type = Type::TEXT)
+        {
+            DiffInfo info(std::move(path), std::move(arguments), type);
+            return std::make_shared<GenericDiffReporter>(info);
+        }
+
+        static std::shared_ptr<GenericDiffReporter>
+        createForegroundReporter(std::string path, Type type = Type::TEXT)
+        {
+            return createForegroundReporter(
+                std::move(path), DiffInfo::getDefaultArguments(), type);
+        }
+
+        static std::shared_ptr<GenericDiffReporter> createForegroundReporter(
+            std::string path, std::string arguments, Type type = Type::TEXT)
+        {
+            DiffInfo info(std::move(path), std::move(arguments), type);
+            auto reporter = std::make_shared<GenericDiffReporter>(info);
+            reporter->launcher.setForeground(true);
+            return reporter;
+        }
+    };
+}
+
+#endif 
+
+ // ******************** From: TextDiffReporter.h
+#ifndef APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
+#define APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
+
 
 
 namespace ApprovalTests
 {
     
-    class QuietReporter : public Reporter
+    
+    
+    
+    class TextDiffReporter : public Reporter
     {
+    private:
+        std::unique_ptr<Reporter> m_reporter;
+
     public:
-        bool report(std::string ,
-                    std::string ) const override
+        TextDiffReporter()
         {
-            return true;
+            std::vector<std::shared_ptr<Reporter>> reporters = {
+                CustomReporter::createForegroundReporter("diff"),
+                CustomReporter::createForegroundReporter(
+                    "C:/Windows/System32/fc.exe")};
+            m_reporter =
+                std::unique_ptr<Reporter>(new FirstWorkingReporter(reporters));
+        }
+
+        bool report(std::string received, std::string approved) const override
+        {
+            std::cout << "Comparing files:" << std::endl;
+            std::cout << "received: " << received << std::endl;
+            std::cout << "approved: " << approved << std::endl;
+            const bool result = m_reporter->report(received, approved);
+            if (!result)
+            {
+                std::cout << "TextDiffReporter did not find a working diff "
+                             "program\n\n";
+            }
+
+            return result;
         }
     };
-}
+} 
 
 #endif 
 
@@ -2383,7 +2529,7 @@ namespace ApprovalTests
 
     public:
         explicit CIBuildOnlyReporter(std::shared_ptr<Reporter> reporter =
-                                         std::make_shared<QuietReporter>())
+                                         std::make_shared<TextDiffReporter>())
             : m_reporter(reporter)
         {
         }
@@ -3596,53 +3742,6 @@ auto boost::ut::cfg<boost::ut::override> =
 // </SingleHpp>
 #endif 
 
- // ******************** From: ForegroundSystemLauncher.h
-#ifndef APPROVALTESTS_CPP_FOREGROUNDSYSTEMLAUNCHER_H
-#define APPROVALTESTS_CPP_FOREGROUNDSYSTEMLAUNCHER_H
-
-
-namespace ApprovalTests
-{
-    
-    
-    
-    
-    class ForegroundSystemLauncher : public CommandLauncher
-    {
-    public:
-        bool launch(const std::string& commandLine) override
-        {
-            std::string launch = getCommandLine(commandLine);
-
-            
-            
-            
-            
-            
-            
-            
-            
-            int exitCode = system(launch.c_str());
-            APPROVAL_TESTS_UNUSED(exitCode);
-
-            return true;
-        }
-
-        std::string
-        getCommandLine(const std::string& commandLine) const override
-        {
-            
-            const std::string launch =
-                SystemUtils::isWindowsOs()
-                    ? (std::string("cmd /S /C ") + "\"" + commandLine + "\"")
-                    : (commandLine);
-            return launch;
-        }
-    };
-} 
-
-#endif 
-
  // ******************** From: NamerFactory.h
 #ifndef APPROVALTESTS_CPP_NAMERFACTORY_H
 #define APPROVALTESTS_CPP_NAMERFACTORY_H
@@ -3902,113 +4001,6 @@ namespace ApprovalTests
         }
     };
 }
-
-#endif 
-
- // ******************** From: ConsoleDiffReporter.h
-#ifndef APPROVALTESTS_CPP_CONSOLEDIFFREPORTER_H
-#define APPROVALTESTS_CPP_CONSOLEDIFFREPORTER_H
-
-
-
-namespace ApprovalTests
-{
-    
-    
-    
-    
-    
-    class ConsoleDiffReporter : public CommandReporter
-    {
-    private:
-        ApprovalTests::ForegroundSystemLauncher launcher;
-
-    public:
-        explicit ConsoleDiffReporter(const std::string& program)
-            : CommandReporter(program, &launcher)
-        {
-        }
-
-        explicit ConsoleDiffReporter(const DiffInfo& info)
-            : CommandReporter(info.getProgramForOs(), &launcher)
-        {
-        }
-    };
-} 
-
-#endif 
-
- // ******************** From: CustomReporter.h
-#ifndef APPROVALTESTS_CPP_CUSTOMREPORTER_H
-#define APPROVALTESTS_CPP_CUSTOMREPORTER_H
-
-
-namespace ApprovalTests
-{
-    class CustomReporter
-    {
-    public:
-        static std::shared_ptr<GenericDiffReporter>
-        create(std::string&& path, Type type = Type::TEXT)
-        {
-            DiffInfo info(std::move(path), type);
-            return std::make_shared<GenericDiffReporter>(info);
-        }
-
-        static std::shared_ptr<GenericDiffReporter> create(
-            std::string&& path, std::string&& arguments, Type type = Type::TEXT)
-        {
-            DiffInfo info(std::move(path), std::move(arguments), type);
-            return std::make_shared<GenericDiffReporter>(info);
-        }
-    };
-}
-
-#endif 
-
- // ******************** From: TextDiffReporter.h
-#ifndef APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
-#define APPROVALTESTS_CPP_TEXTDIFFREPORTER_H
-
-
-
-namespace ApprovalTests
-{
-    
-    
-    
-    
-    class TextDiffReporter : public Reporter
-    {
-    private:
-        std::unique_ptr<Reporter> m_reporter;
-
-    public:
-        TextDiffReporter()
-        {
-            std::vector<Reporter*> reporters = {
-                new ConsoleDiffReporter("diff"),
-                new ConsoleDiffReporter("C:/Windows/System32/fc.exe")};
-            m_reporter =
-                std::unique_ptr<Reporter>(new FirstWorkingReporter(reporters));
-        }
-
-        bool report(std::string received, std::string approved) const override
-        {
-            std::cout << "Comparing files:" << std::endl;
-            std::cout << "received: " << received << std::endl;
-            std::cout << "approved: " << approved << std::endl;
-            const bool result = m_reporter->report(received, approved);
-            if (!result)
-            {
-                std::cout << "TextDiffReporter did not find a working diff "
-                             "program\n\n";
-            }
-
-            return result;
-        }
-    };
-} 
 
 #endif 
 
