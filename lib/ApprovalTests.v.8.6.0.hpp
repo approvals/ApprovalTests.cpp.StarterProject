@@ -1,4 +1,4 @@
-// Approval Tests version v.8.5.0
+// Approval Tests version v.8.6.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -12,9 +12,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVALTESTS_VERSION_MAJOR 8
-#define APPROVALTESTS_VERSION_MINOR 5
+#define APPROVALTESTS_VERSION_MINOR 6
 #define APPROVALTESTS_VERSION_PATCH 0
-#define APPROVALTESTS_VERSION_STR "8.5.0"
+#define APPROVALTESTS_VERSION_STR "8.6.0"
 
 #define APPROVALTESTS_VERSION                                                            \
     (APPROVALTESTS_VERSION_MAJOR * 10000 + APPROVALTESTS_VERSION_MINOR * 100 +           \
@@ -668,6 +668,11 @@ namespace ApprovalTests
 * To do this in doctest, add the following to your main.cpp:
 *
 *     #define APPROVALS_DOCTEST
+*     #include "ApprovalTests.hpp"
+*
+* To do this in Boost.Test, add the following to your main.cpp:
+*
+*     #define APPROVALS_BOOSTTEST
 *     #include "ApprovalTests.hpp"
 *
 * To do this in [Boost].UT, add the following to your main.cpp:
@@ -3196,6 +3201,46 @@ __FILE__
 );
 #endif // APPROVALS_CATCH_DISABLE_FILE_MACRO_CHECK
 
+
+// ******************** From: BoostTestApprovals.h
+
+
+#ifdef APPROVALS_BOOSTTEST
+
+namespace ApprovalTests
+{
+
+    class BoostApprovalListener : public boost::unit_test::test_observer
+    {
+        ApprovalTests::TestName currentTest;
+
+        void test_unit_start(boost::unit_test::test_unit const& test) override
+        {
+            std::string path(test.p_file_name.begin(), test.p_file_name.end());
+            currentTest.setFileName(path);
+
+            currentTest.sections.push_back(test.p_name);
+            ApprovalTests::ApprovalTestNamer::currentTest(&currentTest);
+        }
+
+        void test_unit_finish(boost::unit_test::test_unit const& /*test*/,
+                              unsigned long) override
+        {
+            currentTest.sections.pop_back();
+        }
+    };
+
+    int register_our_listener(BoostApprovalListener& t)
+    {
+        boost::unit_test::framework::register_observer(t);
+        return 1;
+    }
+
+    BoostApprovalListener o;
+    auto dummy_variable = register_our_listener(o);
+}
+
+#endif // APPROVALS_BOOSTTEST
 
 // ******************** From: Catch2Approvals.h
 
