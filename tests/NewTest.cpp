@@ -10,7 +10,7 @@ using namespace ApprovalTests;
 TEST_CASE("ApprovingText")
 {
     Approvals::verify(
-        "Approval Tests can verify text via the golder master method ");
+        "Approval Tests can verify text via the golden master method ");
 }
 
 TEST_CASE("ApprovingWithReporters")
