@@ -18,7 +18,7 @@ TEST_CASE("ApprovingWithReporters")
     // you can alter this to make it launch
     Approvals::verify("Reporters launch only on failure, by default they are "
                       "the DiffReporter",
-                      DiffReporter());
+                      Options(DiffReporter()));
 }
 
 TEST_CASE("Approval Is just an assertion library, you don't need to use it.")
