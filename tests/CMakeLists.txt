@@ -7,6 +7,7 @@ set(SOURCE_FILES
         Tutorial.cpp)
 add_executable(${TEST_NAME} ${SOURCE_FILES})
 target_link_libraries(${TEST_NAME} StarterProject.code ApprovalTests::ApprovalTests Catch2::Catch2)
+target_compile_definitions(${TEST_NAME} PRIVATE APPROVALS_SHOW_DEPRECATION_WARNINGS)
 add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC")
