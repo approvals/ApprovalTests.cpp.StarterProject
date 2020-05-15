@@ -17,7 +17,8 @@ TEST_CASE("ApprovingText")
 
 TEST_CASE("ApprovingWithReporters")
 {
-    // you can alter this to make it launch
+    // See https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/Options.md#top
+    // you can alter this to make the test fail and launch a diff tool:
     Approvals::verify("Reporters launch only on failure, by default they are "
                       "the DiffReporter",
                       Options(DiffReporter()));
