@@ -1,4 +1,4 @@
-// Approval Tests version v.8.7.1
+// Approval Tests version v.8.8.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -25,9 +25,9 @@
 
 
 #define APPROVAL_TESTS_VERSION_MAJOR 8
-#define APPROVAL_TESTS_VERSION_MINOR 7
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "8.7.1"
+#define APPROVAL_TESTS_VERSION_MINOR 8
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "8.8.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1034,6 +1034,23 @@ namespace ApprovalTests
         }
     };
 }
+
+// ******************** From: FmtToString.h
+#ifdef FMT_VERSION
+namespace ApprovalTests
+{
+    class FmtToString
+    {
+    public:
+        template <typename T> static std::string toString(const T& printable)
+        {
+            (void)printable;
+            return fmt::to_string(printable);
+        }
+    };
+
+}
+#endif
 
 // ******************** From: CartesianProduct.h
 
@@ -3886,6 +3903,15 @@ namespace ApprovalTests
 REGISTER_LISTENER("approvals", 0, ApprovalTests::DocTestApprovalListener);
 
 #endif // APPROVALS_DOCTEST
+
+// ******************** From: FmtApprovals.h
+#ifdef FMT_VERSION
+namespace ApprovalTests
+{
+    using FmtApprovals =
+        ApprovalTests::TApprovals<ApprovalTests::ToStringCompileTimeOptions<FmtToString>>;
+}
+#endif
 
 // ******************** From: GoogleConfiguration.h
 
