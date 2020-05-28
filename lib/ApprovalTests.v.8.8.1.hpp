@@ -1,4 +1,4 @@
-// Approval Tests version v.8.8.0
+// Approval Tests version v.8.8.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -26,8 +26,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 8
 #define APPROVAL_TESTS_VERSION_MINOR 8
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "8.8.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "8.8.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -3864,11 +3864,20 @@ namespace ApprovalTests
             {
             }
 
+            std::string doctestToString(const doctest::String& string) const
+            {
+                return string.c_str();
+            }
+
+            std::string doctestToString(const char* string) const
+            {
+                return string;
+            }
+
             void test_case_start(const doctest::TestCaseData& testInfo) override
             {
-
                 currentTest.sections.emplace_back(testInfo.m_name);
-                currentTest.setFileName(testInfo.m_file);
+                currentTest.setFileName(doctestToString(testInfo.m_file));
                 ApprovalTestNamer::currentTest(&currentTest);
             }
 
@@ -3883,12 +3892,7 @@ namespace ApprovalTests
 
             void subcase_start(const doctest::SubcaseSignature& signature) override
             {
-
-#if DOCTEST_VERSION >= 20307
-                currentTest.sections.emplace_back(signature.m_name.c_str());
-#else
-                currentTest.sections.emplace_back(signature.m_name);
-#endif
+                currentTest.sections.emplace_back(doctestToString(signature.m_name));
             }
 
             void subcase_end() override
