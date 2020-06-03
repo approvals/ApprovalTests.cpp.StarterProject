@@ -1,4 +1,4 @@
-// Approval Tests version v.8.9.0
+// Approval Tests version v.8.9.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -13,7 +13,7 @@
 
 // clang-format off
 #if ! defined(APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS)
-#define       APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS 0
+#define       APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS 1
 #endif
 
 #if ! defined(APPROVAL_TESTS_HIDE_DEPRECATED_CODE)
@@ -26,8 +26,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 8
 #define APPROVAL_TESTS_VERSION_MINOR 9
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "8.9.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "8.9.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
