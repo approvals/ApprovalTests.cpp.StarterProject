@@ -1,4 +1,4 @@
-// Approval Tests version v.8.9.2
+// Approval Tests version v.9.0.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -13,17 +13,17 @@
 
 // clang-format off
 #if ! defined(APPROVAL_TESTS_HIDE_DEPRECATED_CODE)
-#define       APPROVAL_TESTS_HIDE_DEPRECATED_CODE 0
+#define       APPROVAL_TESTS_HIDE_DEPRECATED_CODE 1
 #endif
 // clang-format on
 
 // ******************** From: ApprovalTestsVersion.h
 
 
-#define APPROVAL_TESTS_VERSION_MAJOR 8
-#define APPROVAL_TESTS_VERSION_MINOR 9
-#define APPROVAL_TESTS_VERSION_PATCH 2
-#define APPROVAL_TESTS_VERSION_STR "8.9.2"
+#define APPROVAL_TESTS_VERSION_MAJOR 9
+#define APPROVAL_TESTS_VERSION_MINOR 0
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "9.0.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
