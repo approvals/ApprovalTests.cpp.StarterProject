@@ -1,4 +1,4 @@
-// Approval Tests version v.8.9.1
+// Approval Tests version v.8.9.2
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -12,10 +12,6 @@
 // ******************** From: ApprovalsMacroDefaults.h
 
 // clang-format off
-#if ! defined(APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS)
-#define       APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS 1
-#endif
-
 #if ! defined(APPROVAL_TESTS_HIDE_DEPRECATED_CODE)
 #define       APPROVAL_TESTS_HIDE_DEPRECATED_CODE 0
 #endif
@@ -26,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 8
 #define APPROVAL_TESTS_VERSION_MINOR 9
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "8.9.1"
+#define APPROVAL_TESTS_VERSION_PATCH 2
+#define APPROVAL_TESTS_VERSION_STR "8.9.2"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -148,7 +144,6 @@ extern "C"
 #define APPROVAL_TESTS_NO_DISCARD
 #endif
 
-#if APPROVAL_TESTS_SHOW_DEPRECATION_WARNINGS
 #if (__cplusplus >= 201402L)
 #define APPROVAL_TESTS_DEPRECATED(text) [[deprecated(text)]]
 #define APPROVAL_TESTS_DEPRECATED_CPP11(text)
@@ -156,10 +151,6 @@ extern "C"
 #define APPROVAL_TESTS_DEPRECATED(text)
 #define APPROVAL_TESTS_DEPRECATED_CPP11(text)                                            \
     MoreHelpMessages::deprecatedFunctionCalled(text, __FILE__, __LINE__);
-#endif
-#else
-#define APPROVAL_TESTS_DEPRECATED(text)
-#define APPROVAL_TESTS_DEPRECATED_CPP11(text)
 #endif
 
 #define APPROVAL_TESTS_DEPRECATED_USE_OPTIONS                                            \
