@@ -1,4 +1,4 @@
-// Approval Tests version v.10.0.0
+// Approval Tests version v.10.0.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -13,8 +13,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 0
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.0.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.0.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -3239,7 +3239,9 @@ namespace ApprovalTests
             verify(TCompileTimeOptions::ToStringConverter::toString(contents), options);
         }
 
-        template <typename T, typename Function>
+        template <typename T,
+                  typename Function,
+                  typename = Detail::EnableIfNotOptions<Function>>
         static void
         verify(const T& contents, Function converter, const Options& options = Options())
         {
