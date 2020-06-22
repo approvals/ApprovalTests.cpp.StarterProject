@@ -1,4 +1,4 @@
-// Approval Tests version v.10.0.1
+// ApprovalTests.cpp version v.10.1.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 
@@ -12,9 +12,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 0
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.0.1"
+#define APPROVAL_TESTS_VERSION_MINOR 1
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "10.1.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -72,61 +72,83 @@ namespace ApprovalTests
     };
 }
 
-// ******************** From: WinMinGWUtils.h
+// ******************** From: StringMaker.h
 
-#if (defined(__MINGW32__) || defined(__MINGW64__))
-#define APPROVAL_TESTS_MINGW
-#endif
+#include <string>
+#include <sstream>
 
-#ifdef APPROVAL_TESTS_MINGW
-#ifdef __cplusplus
-extern "C"
+namespace ApprovalTests
 {
-#endif
-
-#include <sec_api/stdlib_s.h> /* errno_t, size_t */
-
-    errno_t getenv_s(size_t* ret_required_buf_size,
-                     char* buf,
-                     size_t buf_size_in_bytes,
-                     const char* name);
-
-#ifdef __cplusplus
+    class StringMaker
+    {
+    public:
+        template <typename T> static std::string toString(const T& contents)
+        {
+            std::stringstream s;
+            s << contents;
+            return s.str();
+        }
+    };
 }
-#endif
 
-#endif // APPROVAL_TESTS_MINGW
-
-// ******************** From: ApprovalsMacroDefaults.h
-
-// This file intentionally left blank.
-
-// ******************** From: Macros.h
+// ******************** From: StringUtils.h
 
 
-// Use this in places where we have parameters that are sometimes unused,
-// e.g. because of #if
-// See https://stackoverflow.com/a/1486931/104370
-#define APPROVAL_TESTS_UNUSED(expr)                                                      \
-    do                                                                                   \
-    {                                                                                    \
-        (void)(expr);                                                                    \
-    } while (0)
 
-#if __cplusplus >= 201703L
-#define APPROVAL_TESTS_NO_DISCARD [[nodiscard]]
-#else
-#define APPROVAL_TESTS_NO_DISCARD
-#endif
 
-#if (__cplusplus >= 201402L)
-#define APPROVAL_TESTS_DEPRECATED(text) [[deprecated(text)]]
-#define APPROVAL_TESTS_DEPRECATED_CPP11(text)
-#else
-#define APPROVAL_TESTS_DEPRECATED(text)
-#define APPROVAL_TESTS_DEPRECATED_CPP11(text)                                            \
-    MoreHelpMessages::deprecatedFunctionCalled(text, __FILE__, __LINE__);
-#endif
+#include <string>
+#include <algorithm>
+#include <sstream>
+
+namespace ApprovalTests
+{
+    class StringUtils
+    {
+    public:
+        static std::string replaceAll(std::string inText,
+                                      const std::string& find,
+                                      const std::string& replaceWith)
+        {
+            size_t start_pos = 0;
+            while ((start_pos = inText.find(find, start_pos)) != std::string::npos)
+            {
+                inText.replace(start_pos, find.length(), replaceWith);
+                start_pos +=
+                    replaceWith
+                        .length(); // Handles case where 'to' is a substring of 'from'
+            }
+            return inText;
+        }
+
+        static bool contains(const std::string& inText, const std::string& find)
+        {
+            return inText.find(find, 0) != std::string::npos;
+        }
+
+        static std::string toLower(std::string inText)
+        {
+            std::string copy(inText);
+            std::transform(inText.begin(), inText.end(), copy.begin(), [](char c) {
+                return static_cast<char>(tolower(c));
+            });
+            return copy;
+        }
+
+        static bool endsWith(std::string value, std::string ending)
+        {
+            if (ending.size() > value.size())
+            {
+                return false;
+            }
+            return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+        }
+
+        template <typename T> static std::string toString(const T& contents)
+        {
+            return StringMaker::toString(contents);
+        }
+    };
+}
 
 // ******************** From: ApprovalWriter.h
 
@@ -280,83 +302,61 @@ namespace ApprovalTests
     };
 }
 
-// ******************** From: StringMaker.h
+// ******************** From: ApprovalsMacroDefaults.h
 
-#include <string>
-#include <sstream>
+// This file intentionally left blank.
 
-namespace ApprovalTests
+// ******************** From: Macros.h
+
+
+// Use this in places where we have parameters that are sometimes unused,
+// e.g. because of #if
+// See https://stackoverflow.com/a/1486931/104370
+#define APPROVAL_TESTS_UNUSED(expr)                                                      \
+    do                                                                                   \
+    {                                                                                    \
+        (void)(expr);                                                                    \
+    } while (0)
+
+#if __cplusplus >= 201703L
+#define APPROVAL_TESTS_NO_DISCARD [[nodiscard]]
+#else
+#define APPROVAL_TESTS_NO_DISCARD
+#endif
+
+#if (__cplusplus >= 201402L)
+#define APPROVAL_TESTS_DEPRECATED(text) [[deprecated(text)]]
+#define APPROVAL_TESTS_DEPRECATED_CPP11(text)
+#else
+#define APPROVAL_TESTS_DEPRECATED(text)
+#define APPROVAL_TESTS_DEPRECATED_CPP11(text)                                            \
+    MoreHelpMessages::deprecatedFunctionCalled(text, __FILE__, __LINE__);
+#endif
+
+// ******************** From: WinMinGWUtils.h
+
+#if (defined(__MINGW32__) || defined(__MINGW64__))
+#define APPROVAL_TESTS_MINGW
+#endif
+
+#ifdef APPROVAL_TESTS_MINGW
+#ifdef __cplusplus
+extern "C"
 {
-    class StringMaker
-    {
-    public:
-        template <typename T> static std::string toString(const T& contents)
-        {
-            std::stringstream s;
-            s << contents;
-            return s.str();
-        }
-    };
+#endif
+
+#include <sec_api/stdlib_s.h> /* errno_t, size_t */
+
+    errno_t getenv_s(size_t* ret_required_buf_size,
+                     char* buf,
+                     size_t buf_size_in_bytes,
+                     const char* name);
+
+#ifdef __cplusplus
 }
+#endif
 
-// ******************** From: StringUtils.h
-
-
-
-
-#include <string>
-#include <algorithm>
-#include <sstream>
-
-namespace ApprovalTests
-{
-    class StringUtils
-    {
-    public:
-        static std::string replaceAll(std::string inText,
-                                      const std::string& find,
-                                      const std::string& replaceWith)
-        {
-            size_t start_pos = 0;
-            while ((start_pos = inText.find(find, start_pos)) != std::string::npos)
-            {
-                inText.replace(start_pos, find.length(), replaceWith);
-                start_pos +=
-                    replaceWith
-                        .length(); // Handles case where 'to' is a substring of 'from'
-            }
-            return inText;
-        }
-
-        static bool contains(const std::string& inText, const std::string& find)
-        {
-            return inText.find(find, 0) != std::string::npos;
-        }
-
-        static std::string toLower(std::string inText)
-        {
-            std::string copy(inText);
-            std::transform(inText.begin(), inText.end(), copy.begin(), [](char c) {
-                return static_cast<char>(tolower(c));
-            });
-            return copy;
-        }
-
-        static bool endsWith(std::string value, std::string ending)
-        {
-            if (ending.size() > value.size())
-            {
-                return false;
-            }
-            return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-        }
-
-        template <typename T> static std::string toString(const T& contents)
-        {
-            return StringMaker::toString(contents);
-        }
-    };
-}
+#endif // APPROVAL_TESTS_MINGW
 
 // ******************** From: SystemUtils.h
 
@@ -1212,60 +1212,91 @@ namespace ApprovalTests
     } // namespace CartesianProduct
 } // namespace ApprovalTests
 
-// ******************** From: ExistingFile.h
+// ******************** From: CommandLauncher.h
 
 #include <string>
-#include <utility>
+#include <vector>
 
 namespace ApprovalTests
 {
-    class ExistingFile : public ApprovalWriter
+    // An interface to trigger execution of a command. See also SystemLauncher
+    class CommandLauncher
     {
-        std::string filePath;
-
     public:
-        explicit ExistingFile(std::string filePath_) : filePath(std::move(filePath_))
-        {
-        }
-        virtual std::string getFileExtensionWithDot() const override
-        {
-            return FileUtils::getExtensionWithDot(filePath);
-        }
-        virtual void write(std::string /*path*/) const override
-        {
-            // do nothing
-        }
-        virtual void cleanUpReceived(std::string /*receivedPath*/) const override
-        {
-            // do nothing
-        }
+        virtual ~CommandLauncher() = default;
+        virtual bool launch(const std::string& commandLine) = 0;
+        virtual std::string getCommandLine(const std::string& commandLine) const = 0;
     };
 }
 
-// ******************** From: MoreHelpMessages.h
+// ******************** From: SystemLauncher.h
 
+
+#include <cstdlib>
 #include <string>
+#include <vector>
 
 namespace ApprovalTests
 {
-    class MoreHelpMessages
+    class SystemLauncher : public CommandLauncher
     {
+    private:
+        bool useWindows_ = SystemUtils::isWindowsOs();
+        bool isForeground_ = false;
+
     public:
-        static void deprecatedFunctionCalled(const std::string& message,
-                                             const std::string& file,
-                                             int lineNumber)
+        explicit SystemLauncher(bool isForeground = false) : isForeground_(isForeground)
         {
-            std::cout << "\n***************** Deprecation Warning: ***************\n"
-                      << "*\n"
-                      << "* " << message << '\n'
-                      << "*\n"
-                      << "* Deprecated method:\n"
-                      << "*    " << file << ":" << lineNumber << '\n'
-                      << "* Called from:\n"
-                      << "*    " << ApprovalTestNamer::getCurrentTest().getFileName()
-                      << '\n'
-                      << "*\n"
-                      << "******************************************************\n\n";
+        }
+
+        bool launch(const std::string& commandLine) override
+        {
+            std::string launch = getCommandLine(commandLine);
+
+            SystemUtils::runSystemCommandOrThrow(launch);
+            return true;
+        }
+
+        // Seam for testing
+        void invokeForWindows(bool useWindows)
+        {
+            useWindows_ = useWindows;
+        }
+
+        void setForeground(bool foreground)
+        {
+            isForeground_ = foreground;
+        }
+
+        bool isForeground() const
+        {
+            return isForeground_;
+        }
+
+        std::string getCommandLine(const std::string& commandLine) const override
+        {
+            std::string launch = useWindows_
+                                     ? getWindowsCommandLine(commandLine, isForeground_)
+                                     : getUnixCommandLine(commandLine, isForeground_);
+            return launch;
+        }
+
+        std::string getWindowsCommandLine(const std::string& commandLine,
+                                          bool foreground) const
+        {
+            std::string launch =
+                foreground ? (std::string("cmd /S /C ") + "\"" + commandLine + "\"")
+                           : ("start \"\" " + commandLine);
+
+            return launch;
+        }
+
+        std::string getUnixCommandLine(const std::string& commandLine,
+                                       bool foreground) const
+        {
+            std::string launch = foreground ? commandLine : (commandLine + " &");
+
+            return launch;
         }
     };
 }
@@ -1395,23 +1426,6 @@ namespace ApprovalTests
     };
 }
 
-// ******************** From: CommandLauncher.h
-
-#include <string>
-#include <vector>
-
-namespace ApprovalTests
-{
-    // An interface to trigger execution of a command. See also SystemLauncher
-    class CommandLauncher
-    {
-    public:
-        virtual ~CommandLauncher() = default;
-        virtual bool launch(const std::string& commandLine) = 0;
-        virtual std::string getCommandLine(const std::string& commandLine) const = 0;
-    };
-}
-
 // ******************** From: CommandReporter.h
 
 #include <utility>
@@ -1506,78 +1520,6 @@ namespace ApprovalTests
             {
                 converter = std::make_shared<DoNothing>();
             }
-        }
-    };
-}
-
-// ******************** From: SystemLauncher.h
-
-
-#include <cstdlib>
-#include <string>
-#include <vector>
-
-namespace ApprovalTests
-{
-    class SystemLauncher : public CommandLauncher
-    {
-    private:
-        bool useWindows_ = SystemUtils::isWindowsOs();
-        bool isForeground_ = false;
-
-    public:
-        explicit SystemLauncher(bool isForeground = false) : isForeground_(isForeground)
-        {
-        }
-
-        bool launch(const std::string& commandLine) override
-        {
-            std::string launch = getCommandLine(commandLine);
-
-            SystemUtils::runSystemCommandOrThrow(launch);
-            return true;
-        }
-
-        // Seam for testing
-        void invokeForWindows(bool useWindows)
-        {
-            useWindows_ = useWindows;
-        }
-
-        void setForeground(bool foreground)
-        {
-            isForeground_ = foreground;
-        }
-
-        bool isForeground() const
-        {
-            return isForeground_;
-        }
-
-        std::string getCommandLine(const std::string& commandLine) const override
-        {
-            std::string launch = useWindows_
-                                     ? getWindowsCommandLine(commandLine, isForeground_)
-                                     : getUnixCommandLine(commandLine, isForeground_);
-            return launch;
-        }
-
-        std::string getWindowsCommandLine(const std::string& commandLine,
-                                          bool foreground) const
-        {
-            std::string launch =
-                foreground ? (std::string("cmd /S /C ") + "\"" + commandLine + "\"")
-                           : ("start \"\" " + commandLine);
-
-            return launch;
-        }
-
-        std::string getUnixCommandLine(const std::string& commandLine,
-                                       bool foreground) const
-        {
-            std::string launch = foreground ? commandLine : (commandLine + " &");
-
-            return launch;
         }
     };
 }
@@ -1824,224 +1766,6 @@ namespace ApprovalTests
     };
 }
 
-// ******************** From: LinuxReporters.h
-
-
-namespace ApprovalTests
-{
-    namespace Linux
-    {
-        class SublimeMergeSnapReporter : public GenericDiffReporter
-        {
-        public:
-            SublimeMergeSnapReporter()
-                : GenericDiffReporter(DiffPrograms::Linux::SUBLIME_MERGE_SNAP())
-            {
-                launcher.setForeground(true);
-            }
-        };
-
-        class SublimeMergeFlatpakReporter : public GenericDiffReporter
-        {
-        public:
-            SublimeMergeFlatpakReporter()
-                : GenericDiffReporter(DiffPrograms::Linux::SUBLIME_MERGE_FLATPAK())
-            {
-                launcher.setForeground(true);
-            }
-        };
-
-        class SublimeMergeRepositoryPackageReporter : public GenericDiffReporter
-        {
-        public:
-            SublimeMergeRepositoryPackageReporter()
-                : GenericDiffReporter(
-                      DiffPrograms::Linux::SUBLIME_MERGE_REPOSITORY_PACKAGE())
-            {
-                launcher.setForeground(true);
-            }
-        };
-
-        class SublimeMergeDirectDownloadReporter : public GenericDiffReporter
-        {
-        public:
-            SublimeMergeDirectDownloadReporter()
-                : GenericDiffReporter(
-                      DiffPrograms::Linux::SUBLIME_MERGE_DIRECT_DOWNLOAD())
-            {
-                launcher.setForeground(true);
-            }
-        };
-
-        class SublimeMergeReporter : public FirstWorkingReporter
-        {
-        public:
-            SublimeMergeReporter()
-                : FirstWorkingReporter({new SublimeMergeSnapReporter(),
-                                        new SublimeMergeFlatpakReporter(),
-                                        new SublimeMergeRepositoryPackageReporter(),
-                                        new SublimeMergeDirectDownloadReporter()})
-            {
-            }
-        };
-
-        class KDiff3Reporter : public GenericDiffReporter
-        {
-        public:
-            KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Linux::KDIFF3())
-            {
-            }
-        };
-
-        class MeldReporter : public GenericDiffReporter
-        {
-        public:
-            MeldReporter() : GenericDiffReporter(DiffPrograms::Linux::MELD())
-            {
-            }
-        };
-
-        class BeyondCompareReporter : public GenericDiffReporter
-        {
-        public:
-            BeyondCompareReporter()
-                : GenericDiffReporter(DiffPrograms::Linux::BEYOND_COMPARE())
-            {
-            }
-        };
-
-        class LinuxDiffReporter : public FirstWorkingReporter
-        {
-        public:
-            LinuxDiffReporter()
-                : FirstWorkingReporter({
-                      new BeyondCompareReporter(),
-                      new MeldReporter(),
-                      new SublimeMergeReporter(),
-                      new KDiff3Reporter()
-                      // Note: ApprovalTests::Mac::CLionDiffReporter also works on Linux
-                  })
-            {
-            }
-        };
-    }
-}
-
-// ******************** From: MacReporters.h
-
-
-namespace ApprovalTests
-{
-    namespace Mac
-    {
-        class DiffMergeReporter : public GenericDiffReporter
-        {
-        public:
-            DiffMergeReporter() : GenericDiffReporter(DiffPrograms::Mac::DIFF_MERGE())
-            {
-            }
-        };
-
-        class AraxisMergeReporter : public GenericDiffReporter
-        {
-        public:
-            AraxisMergeReporter() : GenericDiffReporter(DiffPrograms::Mac::ARAXIS_MERGE())
-            {
-            }
-        };
-
-        class VisualStudioCodeReporter : public GenericDiffReporter
-        {
-        public:
-            VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Mac::VS_CODE())
-            {
-            }
-        };
-
-        class BeyondCompareReporter : public GenericDiffReporter
-        {
-        public:
-            BeyondCompareReporter()
-                : GenericDiffReporter(DiffPrograms::Mac::BEYOND_COMPARE())
-            {
-            }
-        };
-
-        class KaleidoscopeReporter : public GenericDiffReporter
-        {
-        public:
-            KaleidoscopeReporter()
-                : GenericDiffReporter(DiffPrograms::Mac::KALEIDOSCOPE())
-            {
-            }
-        };
-
-        class SublimeMergeReporter : public GenericDiffReporter
-        {
-        public:
-            SublimeMergeReporter()
-                : GenericDiffReporter(DiffPrograms::Mac::SUBLIME_MERGE())
-            {
-                launcher.setForeground(true);
-            }
-        };
-
-        class KDiff3Reporter : public GenericDiffReporter
-        {
-        public:
-            KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Mac::KDIFF3())
-            {
-            }
-        };
-
-        class P4MergeReporter : public GenericDiffReporter
-        {
-        public:
-            P4MergeReporter() : GenericDiffReporter(DiffPrograms::Mac::P4MERGE())
-            {
-            }
-        };
-
-        class TkDiffReporter : public GenericDiffReporter
-        {
-        public:
-            TkDiffReporter() : GenericDiffReporter(DiffPrograms::Mac::TK_DIFF())
-            {
-            }
-        };
-
-        // Note that this will be found on Linux too.
-        // See https://github.com/approvals/ApprovalTests.cpp/issues/138 for limitations
-        class CLionDiffReporter : public GenericDiffReporter
-        {
-        public:
-            CLionDiffReporter() : GenericDiffReporter(DiffPrograms::Mac::CLION())
-            {
-            }
-        };
-
-        class MacDiffReporter : public FirstWorkingReporter
-        {
-        public:
-            MacDiffReporter()
-                : FirstWorkingReporter({
-                      new AraxisMergeReporter(),
-                      new BeyondCompareReporter(),
-                      new DiffMergeReporter(),
-                      new KaleidoscopeReporter(),
-                      new P4MergeReporter(),
-                      new SublimeMergeReporter(),
-                      new KDiff3Reporter(),
-                      new TkDiffReporter(),
-                      new VisualStudioCodeReporter(),
-                      new CLionDiffReporter()
-                  })
-            {
-            }
-        };
-    }
-}
-
 // ******************** From: WindowsReporters.h
 
 
@@ -2213,6 +1937,224 @@ namespace ApprovalTests
     }
 }
 
+// ******************** From: MacReporters.h
+
+
+namespace ApprovalTests
+{
+    namespace Mac
+    {
+        class DiffMergeReporter : public GenericDiffReporter
+        {
+        public:
+            DiffMergeReporter() : GenericDiffReporter(DiffPrograms::Mac::DIFF_MERGE())
+            {
+            }
+        };
+
+        class AraxisMergeReporter : public GenericDiffReporter
+        {
+        public:
+            AraxisMergeReporter() : GenericDiffReporter(DiffPrograms::Mac::ARAXIS_MERGE())
+            {
+            }
+        };
+
+        class VisualStudioCodeReporter : public GenericDiffReporter
+        {
+        public:
+            VisualStudioCodeReporter() : GenericDiffReporter(DiffPrograms::Mac::VS_CODE())
+            {
+            }
+        };
+
+        class BeyondCompareReporter : public GenericDiffReporter
+        {
+        public:
+            BeyondCompareReporter()
+                : GenericDiffReporter(DiffPrograms::Mac::BEYOND_COMPARE())
+            {
+            }
+        };
+
+        class KaleidoscopeReporter : public GenericDiffReporter
+        {
+        public:
+            KaleidoscopeReporter()
+                : GenericDiffReporter(DiffPrograms::Mac::KALEIDOSCOPE())
+            {
+            }
+        };
+
+        class SublimeMergeReporter : public GenericDiffReporter
+        {
+        public:
+            SublimeMergeReporter()
+                : GenericDiffReporter(DiffPrograms::Mac::SUBLIME_MERGE())
+            {
+                launcher.setForeground(true);
+            }
+        };
+
+        class KDiff3Reporter : public GenericDiffReporter
+        {
+        public:
+            KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Mac::KDIFF3())
+            {
+            }
+        };
+
+        class P4MergeReporter : public GenericDiffReporter
+        {
+        public:
+            P4MergeReporter() : GenericDiffReporter(DiffPrograms::Mac::P4MERGE())
+            {
+            }
+        };
+
+        class TkDiffReporter : public GenericDiffReporter
+        {
+        public:
+            TkDiffReporter() : GenericDiffReporter(DiffPrograms::Mac::TK_DIFF())
+            {
+            }
+        };
+
+        // Note that this will be found on Linux too.
+        // See https://github.com/approvals/ApprovalTests.cpp/issues/138 for limitations
+        class CLionDiffReporter : public GenericDiffReporter
+        {
+        public:
+            CLionDiffReporter() : GenericDiffReporter(DiffPrograms::Mac::CLION())
+            {
+            }
+        };
+
+        class MacDiffReporter : public FirstWorkingReporter
+        {
+        public:
+            MacDiffReporter()
+                : FirstWorkingReporter({
+                      new AraxisMergeReporter(),
+                      new BeyondCompareReporter(),
+                      new DiffMergeReporter(),
+                      new KaleidoscopeReporter(),
+                      new P4MergeReporter(),
+                      new SublimeMergeReporter(),
+                      new KDiff3Reporter(),
+                      new TkDiffReporter(),
+                      new VisualStudioCodeReporter(),
+                      new CLionDiffReporter()
+                  })
+            {
+            }
+        };
+    }
+}
+
+// ******************** From: LinuxReporters.h
+
+
+namespace ApprovalTests
+{
+    namespace Linux
+    {
+        class SublimeMergeSnapReporter : public GenericDiffReporter
+        {
+        public:
+            SublimeMergeSnapReporter()
+                : GenericDiffReporter(DiffPrograms::Linux::SUBLIME_MERGE_SNAP())
+            {
+                launcher.setForeground(true);
+            }
+        };
+
+        class SublimeMergeFlatpakReporter : public GenericDiffReporter
+        {
+        public:
+            SublimeMergeFlatpakReporter()
+                : GenericDiffReporter(DiffPrograms::Linux::SUBLIME_MERGE_FLATPAK())
+            {
+                launcher.setForeground(true);
+            }
+        };
+
+        class SublimeMergeRepositoryPackageReporter : public GenericDiffReporter
+        {
+        public:
+            SublimeMergeRepositoryPackageReporter()
+                : GenericDiffReporter(
+                      DiffPrograms::Linux::SUBLIME_MERGE_REPOSITORY_PACKAGE())
+            {
+                launcher.setForeground(true);
+            }
+        };
+
+        class SublimeMergeDirectDownloadReporter : public GenericDiffReporter
+        {
+        public:
+            SublimeMergeDirectDownloadReporter()
+                : GenericDiffReporter(
+                      DiffPrograms::Linux::SUBLIME_MERGE_DIRECT_DOWNLOAD())
+            {
+                launcher.setForeground(true);
+            }
+        };
+
+        class SublimeMergeReporter : public FirstWorkingReporter
+        {
+        public:
+            SublimeMergeReporter()
+                : FirstWorkingReporter({new SublimeMergeSnapReporter(),
+                                        new SublimeMergeFlatpakReporter(),
+                                        new SublimeMergeRepositoryPackageReporter(),
+                                        new SublimeMergeDirectDownloadReporter()})
+            {
+            }
+        };
+
+        class KDiff3Reporter : public GenericDiffReporter
+        {
+        public:
+            KDiff3Reporter() : GenericDiffReporter(DiffPrograms::Linux::KDIFF3())
+            {
+            }
+        };
+
+        class MeldReporter : public GenericDiffReporter
+        {
+        public:
+            MeldReporter() : GenericDiffReporter(DiffPrograms::Linux::MELD())
+            {
+            }
+        };
+
+        class BeyondCompareReporter : public GenericDiffReporter
+        {
+        public:
+            BeyondCompareReporter()
+                : GenericDiffReporter(DiffPrograms::Linux::BEYOND_COMPARE())
+            {
+            }
+        };
+
+        class LinuxDiffReporter : public FirstWorkingReporter
+        {
+        public:
+            LinuxDiffReporter()
+                : FirstWorkingReporter({
+                      new BeyondCompareReporter(),
+                      new MeldReporter(),
+                      new SublimeMergeReporter(),
+                      new KDiff3Reporter()
+                      // Note: ApprovalTests::Mac::CLionDiffReporter also works on Linux
+                  })
+            {
+            }
+        };
+    }
+}
+
 // ******************** From: DiffReporter.h
 
 
@@ -2260,144 +2202,20 @@ namespace ApprovalTests
     };
 }
 
-// ******************** From: DefaultReporterDisposer.h
-
-
-namespace ApprovalTests
-{
-    //! Implementation detail of Approvals::useAsDefaultReporter()
-    class APPROVAL_TESTS_NO_DISCARD DefaultReporterDisposer
-    {
-    private:
-        std::shared_ptr<Reporter> previous_result;
-
-    public:
-        explicit DefaultReporterDisposer(const std::shared_ptr<Reporter>& reporter)
-        {
-            previous_result = DefaultReporterFactory::getDefaultReporter();
-            DefaultReporterFactory::setDefaultReporter(reporter);
-        }
-
-        ~DefaultReporterDisposer()
-        {
-            DefaultReporterFactory::setDefaultReporter(previous_result);
-        }
-    };
-}
-
-// ******************** From: SubdirectoryDisposer.h
+// ******************** From: DefaultReporter.h
 
 
 #include <string>
-#include <utility>
 
 namespace ApprovalTests
 {
-    //! Implementation detail of Approvals::useApprovalsSubdirectory()
-    class APPROVAL_TESTS_NO_DISCARD SubdirectoryDisposer
+    class DefaultReporter : public Reporter
     {
-    private:
-        std::string previous_result;
-
     public:
-        explicit SubdirectoryDisposer(std::string subdirectory)
+        virtual bool report(std::string received, std::string approved) const override
         {
-            previous_result = ApprovalTestNamer::testConfiguration().subdirectory;
-            ApprovalTestNamer::testConfiguration().subdirectory = std::move(subdirectory);
-        }
-
-        ~SubdirectoryDisposer()
-        {
-            ApprovalTestNamer::testConfiguration().subdirectory = previous_result;
-        }
-    };
-}
-
-// ******************** From: DefaultNamerFactory.h
-
-
-#include <memory>
-#include <utility>
-
-namespace ApprovalTests
-{
-
-    using NamerCreator = std::function<std::shared_ptr<ApprovalNamer>()>;
-
-    //! Implementation detail of Approvals::useAsDefaultNamer()
-    class DefaultNamerFactory
-    {
-    private:
-        static NamerCreator& defaultNamer()
-        {
-            static NamerCreator namer = []() {
-                return std::make_shared<ApprovalTestNamer>();
-            };
-            return namer;
-        }
-
-    public:
-        static NamerCreator getDefaultNamer()
-        {
-            return defaultNamer();
-        }
-
-        static void setDefaultNamer(NamerCreator namer)
-        {
-            defaultNamer() = std::move(namer);
-        }
-    };
-}
-
-// ******************** From: ExistingFileNamer.h
-
-#include <utility>
-
-namespace ApprovalTests
-{
-    class ExistingFileNamer : public ApprovalNamer
-    {
-        std::string filePath;
-
-    public:
-        explicit ExistingFileNamer(std::string filePath_) : filePath(std::move(filePath_))
-        {
-        }
-        virtual std::string getApprovedFile(std::string extensionWithDot) const override
-        {
-            return DefaultNamerFactory::getDefaultNamer()()->getApprovedFile(
-                extensionWithDot);
-        }
-        virtual std::string
-            getReceivedFile(std::string /*extensionWithDot*/) const override
-        {
-            return filePath;
-        }
-    };
-}
-
-// ******************** From: DefaultNamerDisposer.h
-
-#include <utility>
-
-namespace ApprovalTests
-{
-    //! Implementation detail of Approvals::useAsDefaultNamer()
-    class APPROVAL_TESTS_NO_DISCARD DefaultNamerDisposer
-    {
-    private:
-        NamerCreator previous_result;
-
-    public:
-        explicit DefaultNamerDisposer(NamerCreator namerCreator)
-        {
-            previous_result = DefaultNamerFactory::getDefaultNamer();
-            DefaultNamerFactory::setDefaultNamer(std::move(namerCreator));
-        }
-
-        ~DefaultNamerDisposer()
-        {
-            DefaultNamerFactory::setDefaultNamer(previous_result);
+            return DefaultReporterFactory::getDefaultReporter()->report(received,
+                                                                        approved);
         }
     };
 }
@@ -2482,24 +2300,6 @@ namespace ApprovalTests
     }
 }
 
-// ******************** From: DefaultReporter.h
-
-
-#include <string>
-
-namespace ApprovalTests
-{
-    class DefaultReporter : public Reporter
-    {
-    public:
-        virtual bool report(std::string received, std::string approved) const override
-        {
-            return DefaultReporterFactory::getDefaultReporter()->report(received,
-                                                                        approved);
-        }
-    };
-}
-
 // ******************** From: Options.h
 
 #include <utility>
@@ -2550,11 +2350,16 @@ namespace ApprovalTests
         FileOptions fileOptions_;
         Scrubber scrubber_ = Scrubbers::doNothing;
         const Reporter& reporter_ = defaultReporter();
+        bool usingDefaultScrubber_ = true;
 
-        Options(FileOptions fileOptions, Scrubber scrubber, const Reporter& reporter)
+        Options(FileOptions fileOptions,
+                Scrubber scrubber,
+                const Reporter& reporter,
+                bool usingDefaultScrubber)
             : fileOptions_(std::move(fileOptions))
             , scrubber_(std::move(scrubber))
             , reporter_(reporter)
+            , usingDefaultScrubber_(usingDefaultScrubber)
         {
         }
 
@@ -2562,7 +2367,7 @@ namespace ApprovalTests
         Options clone(const FileOptions& fileOptions) const
         {
             // TODO error this can retain a previous Options* ???
-            return Options(fileOptions, scrubber_, reporter_);
+            return Options(fileOptions, scrubber_, reporter_, usingDefaultScrubber_);
         }
 
         static const Reporter& defaultReporter()
@@ -2576,6 +2381,7 @@ namespace ApprovalTests
 
         explicit Options(Scrubber scrubber) : scrubber_(std::move(scrubber))
         {
+            usingDefaultScrubber_ = false;
         }
 
         explicit Options(const Reporter& reporter) : reporter_(reporter)
@@ -2602,6 +2408,12 @@ namespace ApprovalTests
         }
 
         APPROVAL_TESTS_NO_DISCARD
+        bool isUsingDefaultScrubber() const
+        {
+            return usingDefaultScrubber_;
+        }
+
+        APPROVAL_TESTS_NO_DISCARD
         std::string scrub(const std::string& input) const
         {
             return scrubber_(input);
@@ -2616,13 +2428,13 @@ namespace ApprovalTests
         APPROVAL_TESTS_NO_DISCARD
         Options withReporter(const Reporter& reporter) const
         {
-            return Options(fileOptions_, scrubber_, reporter);
+            return Options(fileOptions_, scrubber_, reporter, usingDefaultScrubber_);
         }
 
         APPROVAL_TESTS_NO_DISCARD
         Options withScrubber(Scrubber scrubber) const
         {
-            return Options(fileOptions_, std::move(scrubber), reporter_);
+            return Options(fileOptions_, std::move(scrubber), reporter_, false);
         }
     };
 
@@ -2634,6 +2446,242 @@ namespace ApprovalTests
             (!std::is_same<Options, typename std::decay<T>::type>::value),
             R>::type;
     } // namespace Detail
+}
+
+// ******************** From: DefaultNamerFactory.h
+
+
+#include <memory>
+#include <utility>
+
+namespace ApprovalTests
+{
+
+    using NamerCreator = std::function<std::shared_ptr<ApprovalNamer>()>;
+
+    //! Implementation detail of Approvals::useAsDefaultNamer()
+    class DefaultNamerFactory
+    {
+    private:
+        static NamerCreator& defaultNamer()
+        {
+            static NamerCreator namer = []() {
+                return std::make_shared<ApprovalTestNamer>();
+            };
+            return namer;
+        }
+
+    public:
+        static NamerCreator getDefaultNamer()
+        {
+            return defaultNamer();
+        }
+
+        static void setDefaultNamer(NamerCreator namer)
+        {
+            defaultNamer() = std::move(namer);
+        }
+    };
+}
+
+// ******************** From: ExistingFileNamer.h
+
+#include <utility>
+
+namespace ApprovalTests
+{
+    class ExistingFileNamer : public ApprovalNamer
+    {
+        std::string filePath;
+
+    public:
+        explicit ExistingFileNamer(std::string filePath_) : filePath(std::move(filePath_))
+        {
+        }
+        virtual std::string getApprovedFile(std::string extensionWithDot) const override
+        {
+            return DefaultNamerFactory::getDefaultNamer()()->getApprovedFile(
+                extensionWithDot);
+        }
+        virtual std::string
+            getReceivedFile(std::string /*extensionWithDot*/) const override
+        {
+            return filePath;
+        }
+    };
+}
+
+// ******************** From: ExistingFile.h
+
+#include <string>
+#include <utility>
+#include <fstream>
+
+namespace ApprovalTests
+{
+    class ExistingFile : public ApprovalWriter
+    {
+        std::string filePath;
+        bool deleteScrubbedFile = false;
+
+        std::string scrub(std::string fileName, const Options& options)
+        {
+            if (options.isUsingDefaultScrubber())
+            {
+                return fileName;
+            }
+            auto content = FileUtils::readFileThrowIfMissing(fileName);
+            const auto scrubbedContent = options.scrub(content);
+            if (content == scrubbedContent)
+            {
+                deleteScrubbedFile = false;
+                return fileName;
+            }
+            else
+            {
+                std::size_t found = fileName.find_last_of('.');
+                auto fileExtension = fileName.substr(found);
+                std::string baseName = fileName.substr(0, found);
+
+                auto newFileName = baseName + ".scrubbed.received" + fileExtension;
+                FileUtils::writeToFile(newFileName, scrubbedContent);
+                deleteScrubbedFile = true;
+                return newFileName;
+            }
+        }
+
+    public:
+        explicit ExistingFile(std::string filePath_, const Options& options)
+        {
+            filePath = scrub(filePath_, options);
+        }
+        virtual std::string getFileExtensionWithDot() const override
+        {
+            return FileUtils::getExtensionWithDot(filePath);
+        }
+        virtual void write(std::string /*path*/) const override
+        {
+            // do nothing
+        }
+        virtual void cleanUpReceived(std::string receivedPath) const override
+        {
+            if (deleteScrubbedFile && (receivedPath == filePath))
+            {
+                remove(receivedPath.c_str());
+            }
+        }
+        ExistingFileNamer getNamer()
+        {
+            return ExistingFileNamer(filePath);
+        }
+    };
+}
+
+// ******************** From: MoreHelpMessages.h
+
+#include <string>
+
+namespace ApprovalTests
+{
+    class MoreHelpMessages
+    {
+    public:
+        static void deprecatedFunctionCalled(const std::string& message,
+                                             const std::string& file,
+                                             int lineNumber)
+        {
+            std::cout << "\n***************** Deprecation Warning: ***************\n"
+                      << "*\n"
+                      << "* " << message << '\n'
+                      << "*\n"
+                      << "* Deprecated method:\n"
+                      << "*    " << file << ":" << lineNumber << '\n'
+                      << "* Called from:\n"
+                      << "*    " << ApprovalTestNamer::getCurrentTest().getFileName()
+                      << '\n'
+                      << "*\n"
+                      << "******************************************************\n\n";
+        }
+    };
+}
+
+// ******************** From: DefaultReporterDisposer.h
+
+
+namespace ApprovalTests
+{
+    //! Implementation detail of Approvals::useAsDefaultReporter()
+    class APPROVAL_TESTS_NO_DISCARD DefaultReporterDisposer
+    {
+    private:
+        std::shared_ptr<Reporter> previous_result;
+
+    public:
+        explicit DefaultReporterDisposer(const std::shared_ptr<Reporter>& reporter)
+        {
+            previous_result = DefaultReporterFactory::getDefaultReporter();
+            DefaultReporterFactory::setDefaultReporter(reporter);
+        }
+
+        ~DefaultReporterDisposer()
+        {
+            DefaultReporterFactory::setDefaultReporter(previous_result);
+        }
+    };
+}
+
+// ******************** From: SubdirectoryDisposer.h
+
+
+#include <string>
+#include <utility>
+
+namespace ApprovalTests
+{
+    //! Implementation detail of Approvals::useApprovalsSubdirectory()
+    class APPROVAL_TESTS_NO_DISCARD SubdirectoryDisposer
+    {
+    private:
+        std::string previous_result;
+
+    public:
+        explicit SubdirectoryDisposer(std::string subdirectory)
+        {
+            previous_result = ApprovalTestNamer::testConfiguration().subdirectory;
+            ApprovalTestNamer::testConfiguration().subdirectory = std::move(subdirectory);
+        }
+
+        ~SubdirectoryDisposer()
+        {
+            ApprovalTestNamer::testConfiguration().subdirectory = previous_result;
+        }
+    };
+}
+
+// ******************** From: DefaultNamerDisposer.h
+
+#include <utility>
+
+namespace ApprovalTests
+{
+    //! Implementation detail of Approvals::useAsDefaultNamer()
+    class APPROVAL_TESTS_NO_DISCARD DefaultNamerDisposer
+    {
+    private:
+        NamerCreator previous_result;
+
+    public:
+        explicit DefaultNamerDisposer(NamerCreator namerCreator)
+        {
+            previous_result = DefaultNamerFactory::getDefaultNamer();
+            DefaultNamerFactory::setDefaultNamer(std::move(namerCreator));
+        }
+
+        ~DefaultNamerDisposer()
+        {
+            DefaultNamerFactory::setDefaultNamer(previous_result);
+        }
+    };
 }
 
 // ******************** From: CustomReporter.h
@@ -3209,10 +3257,16 @@ namespace ApprovalTests
             return DefaultNamerFactory::getDefaultNamer()();
         }
 
+        template <typename T>
+        using IsNotDerivedFromWriter =
+            typename std::enable_if<!std::is_base_of<ApprovalWriter, T>::value,
+                                    int>::type;
+
         /**@name Verifying single objects
 
          See \userguide{TestingSingleObjects,Testing Single Objects}
          */
+        ///@{
         static void verify(const std::string& contents,
                            const Options& options = Options())
         {
@@ -3220,18 +3274,6 @@ namespace ApprovalTests
                                 options.fileOptions().getFileExtension());
             FileApprover::verify(*getDefaultNamer(), writer, options.getReporter());
         }
-
-        // Note that this overload ignores any scrubber in options
-        static void verify(const ApprovalWriter& writer,
-                           const Options& options = Options())
-        {
-            FileApprover::verify(*getDefaultNamer(), writer, options.getReporter());
-        }
-
-        template <typename T>
-        using IsNotDerivedFromWriter =
-            typename std::enable_if<!std::is_base_of<ApprovalWriter, T>::value,
-                                    int>::type;
 
         template <typename T, typename = IsNotDerivedFromWriter<T>>
         static void verify(const T& contents, const Options& options = Options())
@@ -3249,27 +3291,18 @@ namespace ApprovalTests
             converter(contents, s);
             verify(s.str(), options);
         }
-        ///@}
 
-        static void
-        verifyExceptionMessage(const std::function<void(void)>& functionThatThrows,
-                               const Options& options = Options())
+        /// Note that this overload ignores any scrubber in options
+        static void verify(const ApprovalWriter& writer,
+                           const Options& options = Options())
         {
-            std::string message = "*** no exception thrown ***";
-            try
-            {
-                functionThatThrows();
-            }
-            catch (const std::exception& e)
-            {
-                message = e.what();
-            }
-            verify(message, options);
+            FileApprover::verify(*getDefaultNamer(), writer, options.getReporter());
         }
+        ///@}
 
         /**@name Verifying containers of objects
 
-         See \userguide{TestingContainers.md,Testing Containers}
+         See \userguide{TestingContainers,Testing Containers}
          */
         ///@{
         template <typename Iterator>
@@ -3328,14 +3361,38 @@ namespace ApprovalTests
         }
         ///@}
 
-        // Note that this method ignores any scrubber in options
+        /**@name Other verify methods
+         */
+        ///@{
+
+        /*! \brief Verify the text of an exception
+
+            See \userguide{TestingExceptions,testing-exception-messages,Testing exception messages}
+         */
+        static void
+        verifyExceptionMessage(const std::function<void(void)>& functionThatThrows,
+                               const Options& options = Options())
+        {
+            std::string message = "*** no exception thrown ***";
+            try
+            {
+                functionThatThrows();
+            }
+            catch (const std::exception& e)
+            {
+                message = e.what();
+            }
+            verify(message, options);
+        }
+
+        /// Verify an existing file, that has already been written out
         static void verifyExistingFile(const std::string& filePath,
                                        const Options& options = Options())
         {
-            ExistingFile writer(filePath);
-            ExistingFileNamer namer(filePath);
-            FileApprover::verify(namer, writer, options.getReporter());
+            ExistingFile writer(filePath, options);
+            FileApprover::verify(writer.getNamer(), writer, options.getReporter());
         }
+        ///@}
 
         /**@name Customising Approval Tests
 
@@ -3439,6 +3496,7 @@ namespace ApprovalTests
 
          See \userguide{TestingCombinations,Testing combinations}
          */
+        ///@{
         template <class Converter, class Container, class... Containers>
         static void verifyAllCombinations(const Options& options,
                                           Converter&& converter,
