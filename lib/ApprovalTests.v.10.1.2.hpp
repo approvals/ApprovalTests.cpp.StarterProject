@@ -1,6 +1,15 @@
-// ApprovalTests.cpp version v.10.1.1
+// ApprovalTests.cpp version v.10.1.2
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
+//----------------------------------------------------------------------
+// Welcome to Approval Tests.
+//
+// If you experience linker errors about missing symbols, it means
+// you have forgotten to configure your test framework for Approval Tests.
+//
+// For help with this, please see:
+//     https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/TroubleshootingMisconfiguredMain.md
+//----------------------------------------------------------------------
 
 // ******************** From: ApprovalTests.hpp
 #ifndef APPROVAL_TESTS_CPP_APPROVALS_HPP
@@ -13,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 1
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.1.1"
+#define APPROVAL_TESTS_VERSION_PATCH 2
+#define APPROVAL_TESTS_VERSION_STR "10.1.2"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -987,6 +996,11 @@ namespace ApprovalTests
     {
         std::string doNothing(const std::string& input);
 
+        /**@name Regex-based scrubbers
+
+         See \userguide{how_tos/ScrubNonDeterministicOutput,regular-expressions-regex,Regular Expressions (regex)}
+         */
+        ///@{
         using RegexMatch = std::sub_match<std::string::const_iterator>;
         using RegexReplacer = std::function<std::string(const RegexMatch&)>;
 
@@ -1002,6 +1016,7 @@ namespace ApprovalTests
 
         Scrubber createRegexScrubber(const std::string& regexString,
                                      const std::string& replacementText);
+        ///@}
 
         std::string scrubGuid(const std::string& input);
     }
@@ -1086,10 +1101,12 @@ namespace ApprovalTests
 
     namespace Detail
     {
-        //! Helper to prevent compilation failure when types are wrongly treated as Options
+        //! Helper to prevent compilation failure when types are wrongly treated as Option
+        //  or Reporter:
         template <typename T, typename R = void>
-        using EnableIfNotOptions = typename std::enable_if<
-            (!std::is_same<Options, typename std::decay<T>::type>::value),
+        using EnableIfNotOptionsOrReporter = typename std::enable_if<
+            (!std::is_same<Options, typename std::decay<T>::type>::value) &&
+                (!std::is_base_of<Reporter, typename std::decay<T>::type>::value),
             R>::type;
     } // namespace Detail
 }
@@ -1488,7 +1505,7 @@ namespace ApprovalTests
 
         template <typename T,
                   typename Function,
-                  typename = Detail::EnableIfNotOptions<Function>>
+                  typename = Detail::EnableIfNotOptionsOrReporter<Function>>
         static void
         verify(const T& contents, Function converter, const Options& options = Options())
         {
@@ -1717,8 +1734,9 @@ namespace ApprovalTests
         }
 
         template <class Converter, class... Containers>
-        ApprovalTests::Detail::EnableIfNotOptions<Converter> static verifyAllCombinations(
-            Converter&& converter, const Containers&... inputs)
+        ApprovalTests::Detail::EnableIfNotOptionsOrReporter<
+            Converter> static verifyAllCombinations(Converter&& converter,
+                                                    const Containers&... inputs)
         {
             verifyAllCombinations(
                 Options(), std::forward<Converter>(converter), inputs...);
