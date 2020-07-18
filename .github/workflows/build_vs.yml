@@ -3,7 +3,7 @@ name: build_vs
 on: [push, pull_request]
 
 jobs:
-  build_sln:
+  build_vs2017_sln:
     runs-on: windows-2016
     steps:
       - uses: actions/checkout@v1
@@ -19,3 +19,20 @@ jobs:
         run: |
           visual-studio-2017\x64\Debug\StarterProject.exe
           visual-studio-2017\x64\Release\StarterProject.exe
+
+  build_vs2019_sln:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: build
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
+          msbuild /p:Configuration=Debug visual-studio-2019/StarterProject2019.sln
+          msbuild /p:Configuration=Release visual-studio-2019/StarterProject2019.sln
+        shell: cmd
+
+      - name: test
+        run: |
+          visual-studio-2019\x64\Debug\StarterProject2019.exe
+          visual-studio-2019\x64\Release\StarterProject2019.exe
