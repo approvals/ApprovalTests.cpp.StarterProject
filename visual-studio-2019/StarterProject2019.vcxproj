@@ -152,6 +152,8 @@
     <ClInclude Include="..\code\YourCodeGoesHere.h" />
     <ClInclude Include="..\lib\ApprovalTests.hpp" />
     <ClInclude Include="..\lib\ApprovalTests.v.10.1.2.hpp" />
+    <ClInclude Include="..\lib\catch2\include\catch2\catch.hpp" />
+    <ClInclude Include="..\lib\catch2\include\catch2\catch.v2.11.0.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
