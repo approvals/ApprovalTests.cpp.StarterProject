@@ -10,6 +10,7 @@ This is a starter project for:
 * Catch2 test framework
 * CLion (and any other CMake-aware C++ build system)
 * Visual Studio 2017 (`visual-studio-2017\StarterProject.sln`)
+* Visual Studio 2019 (`visual-studio-2019\StarterProject2019.sln`)
 
 Works on Mac, Linux and Windows.
 
