@@ -8,17 +8,22 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: build
+      - name: set up environment
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
-          msbuild /p:Configuration=Debug visual-studio-2017/StarterProject.sln
-          msbuild /p:Configuration=Release visual-studio-2017/StarterProject.sln
         shell: cmd
 
-      - name: test
+      - name: build and test Debug|x64
         run: |
+          msbuild /p:Configuration=Debug visual-studio-2017/StarterProject.sln
           visual-studio-2017\x64\Debug\StarterProject.exe
+        shell: cmd
+
+      - name: build and test Release|x64
+        run: |
+          msbuild /p:Configuration=Release visual-studio-2017/StarterProject.sln
           visual-studio-2017\x64\Release\StarterProject.exe
+        shell: cmd
 
   build_vs2019_sln:
     runs-on: windows-latest
