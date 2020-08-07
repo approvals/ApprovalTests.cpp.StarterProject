@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.2.0
+// ApprovalTests.cpp version v.10.2.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -22,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 2
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.2.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.2.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -2750,13 +2750,15 @@ namespace ApprovalTests
         static std::chrono::system_clock::time_point
         createUtcDateTime(int year, int month, int day, int hour, int minute, int second);
 
-        static time_t toUTC(std::tm& timeinfo);
-
         static std::string toString(const std::chrono::system_clock::time_point& dateTime,
                                     const std::string& format);
 
         static std::string
         toString(const std::chrono::system_clock::time_point& dateTime);
+
+        static time_t toUtc(std::tm& timeinfo);
+
+        static tm toUtc(time_t& tt);
     };
 }
 
@@ -4798,18 +4800,8 @@ namespace ApprovalTests
                                  int second) // these are UTC values
     {
         tm timeinfo = createTm(year, month, day, hour, minute, second);
-        time_t tt = toUTC(timeinfo);
+        time_t tt = toUtc(timeinfo);
         return std::chrono::system_clock::from_time_t(tt);
-    }
-
-    time_t DateUtils::toUTC(std::tm& timeinfo)
-    {
-#ifdef _WIN32
-        std::time_t tt = _mkgmtime(&timeinfo);
-#else
-        time_t tt = timegm(&timeinfo);
-#endif
-        return tt;
     }
 
     std::string DateUtils::toString(const std::chrono::system_clock::time_point& dateTime)
@@ -4820,13 +4812,31 @@ namespace ApprovalTests
     std::string DateUtils::toString(const std::chrono::system_clock::time_point& dateTime,
                                     const std::string& format)
     {
-        std::string result;
         time_t tt = std::chrono::system_clock::to_time_t(dateTime);
-        tm tm = *gmtime(&tt); // GMT (UTC)
-        std::stringstream ss;
-        ss << std::put_time(&tm, format.c_str());
-        result = ss.str();
-        return result;
+        tm tm_value = toUtc(tt);
+
+        return StringUtils::toString(std::put_time(&tm_value, format.c_str()));
+    }
+
+    time_t DateUtils::toUtc(std::tm& timeinfo)
+    {
+#ifdef _WIN32
+        std::time_t tt = _mkgmtime(&timeinfo);
+#else
+        time_t tt = timegm(&timeinfo);
+#endif
+        return tt;
+    }
+
+    tm DateUtils::toUtc(time_t& tt)
+    {
+#ifdef _MSC_VER // Visual Studio compiler
+        std::tm tm_value = {};
+        gmtime_s(&tm_value, &tt);
+#else
+        tm tm_value = *gmtime(&tt);
+#endif
+        return tm_value;
     }
 }
 
