@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.3.0
+// ApprovalTests.cpp version v.10.4.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 3
+#define APPROVAL_TESTS_VERSION_MINOR 4
 #define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.3.0"
+#define APPROVAL_TESTS_VERSION_STR "10.4.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1989,6 +1989,87 @@ struct Catch2TestCommitRevert : Catch::TestEventListenerBase
 CATCH_REGISTER_LISTENER(Catch2TestCommitRevert)
 #endif
 
+// ******************** From: CppUTestApprovals.h
+
+
+#ifdef APPROVALS_CPPUTEST_EXISTING_MAIN
+#define APPROVALS_CPPUTEST
+#endif
+
+#ifdef APPROVALS_CPPUTEST
+#define APPROVAL_TESTS_INCLUDE_CPPS
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestPlugin.h>
+#include <CppUTest/TestRegistry.h>
+
+namespace ApprovalTests
+{
+    class ApprovalTestsCppUTestPlugin : public TestPlugin
+    {
+    private:
+        // We need to be able to delete currentTest at the end of the
+        // test, to prevent CppUTest's leak-checking from triggering,
+        // due to an undeleted std::string - so we use std::unique_ptr.
+        std::unique_ptr<ApprovalTests::TestName> currentTest;
+
+    public:
+        ApprovalTestsCppUTestPlugin() : TestPlugin("ApprovalTestsCppUTestPlugin")
+        {
+            // Turn off CppUTest's leak checks.
+            // On some platforms, CppUTest's leak-checking reports leaks
+            // in this code, because the way the platform's std::string manages life-times
+            // of string storage is not compatible with the requirements of the
+            // CppUTest leak-checks.
+            MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        }
+
+        APPROVAL_TESTS_NO_DISCARD static std::string
+        cppUTestToString(const SimpleString& string)
+        {
+            return std::string{string.asCharString()};
+        }
+
+        void preTestAction(UtestShell& shell, TestResult& result) override
+        {
+            currentTest.reset(new ApprovalTests::TestName);
+            currentTest->setFileName(cppUTestToString(shell.getFile()));
+
+            currentTest->sections.emplace_back(cppUTestToString(shell.getGroup()));
+            currentTest->sections.emplace_back(cppUTestToString(shell.getName()));
+
+            ApprovalTests::ApprovalTestNamer::currentTest(currentTest.get());
+
+            TestPlugin::preTestAction(shell, result);
+        }
+
+        void postTestAction(UtestShell& shell, TestResult& result) override
+        {
+            currentTest = nullptr;
+            TestPlugin::postTestAction(shell, result);
+        }
+    };
+
+    inline void initializeApprovalTestsForCppUTest()
+    {
+        static ApprovalTests::ApprovalTestsCppUTestPlugin logPlugin;
+        TestRegistry::getCurrentRegistry()->installPlugin(&logPlugin);
+    }
+}
+
+#ifndef APPROVALS_CPPUTEST_EXISTING_MAIN
+int main(int argc, char** argv)
+{
+    ApprovalTests::initializeApprovalTestsForCppUTest();
+
+    int result = CommandLineTestRunner::RunAllTests(argc, argv);
+    TestRegistry::getCurrentRegistry()->resetPlugins();
+    return result;
+}
+#endif
+
+#endif // APPROVALS_CPPUTEST
+
 // ******************** From: DocTestApprovals.h
 
 
@@ -2520,6 +2601,23 @@ namespace ApprovalTests
     };
 }
 
+// ******************** From: EnvironmentVariableReporter.h
+
+#include <memory>
+
+namespace ApprovalTests
+{
+    class EnvironmentVariableReporter : public Reporter
+    {
+        std::shared_ptr<Reporter> defaultIfNotFound_;
+
+    public:
+        EnvironmentVariableReporter();
+        explicit EnvironmentVariableReporter(std::shared_ptr<Reporter> defaultIfNotFound);
+        bool report(std::string received, std::string approved) const override;
+    };
+}
+
 // ******************** From: LinuxReporters.h
 
 
@@ -2656,8 +2754,25 @@ namespace ApprovalTests
         {
         public:
             MacDiffReporter();
+
+            bool report(std::string received, std::string approved) const override;
         };
     }
+}
+
+// ******************** From: ReporterFactory.h
+
+
+#include <memory>
+#include <string>
+
+namespace ApprovalTests
+{
+    class ReporterFactory
+    {
+    public:
+        std::unique_ptr<Reporter> createReporter(const std::string& reporterName) const;
+    };
 }
 
 // ******************** From: WindowsReporters.h
@@ -2766,6 +2881,8 @@ namespace ApprovalTests
         {
         public:
             WindowsDiffReporter();
+
+            bool report(std::string received, std::string approved) const override;
         };
     }
 }
@@ -3570,6 +3687,11 @@ namespace ApprovalTests
 *     #define APPROVALS_BOOSTTEST
 *     #include "ApprovalTests.hpp"
 *
+* To do this in CppUTest, add the following to your main.cpp:
+*
+*     #define APPROVALS_CPPUTEST
+*     #include "ApprovalTests.hpp"
+*
 * To do this in [Boost].UT, add the following to your main.cpp:
 *
 *     #define APPROVALS_UT
@@ -4356,6 +4478,41 @@ namespace ApprovalTests
     }
 }
 
+// ******************** From: EnvironmentVariableReporter.cpp
+
+namespace ApprovalTests
+{
+    EnvironmentVariableReporter::EnvironmentVariableReporter()
+        : defaultIfNotFound_(std::make_shared<ApprovalTests::DiffReporter>())
+    {
+    }
+
+    EnvironmentVariableReporter::EnvironmentVariableReporter(
+        std::shared_ptr<Reporter> defaultIfNotFound)
+        : defaultIfNotFound_(defaultIfNotFound)
+    {
+    }
+
+    bool EnvironmentVariableReporter::report(std::string received,
+                                             std::string approved) const
+    {
+        // Get the env var
+        const auto envVar = SystemUtils::safeGetEnv("APPROVAL_TESTS_USE_REPORTER");
+        if (!envVar.empty())
+        {
+            ReporterFactory factory;
+            auto reporter = factory.createReporter(envVar);
+
+            if (reporter)
+            {
+                return reporter->report(received, approved);
+            }
+        }
+        // Or return false
+        return defaultIfNotFound_->report(received, approved);
+    }
+}
+
 // ******************** From: FirstWorkingReporter.cpp
 
 namespace ApprovalTests
@@ -4500,7 +4657,6 @@ namespace ApprovalTests
                   new MeldReporter(),
                   new SublimeMergeReporter(),
                   new KDiff3Reporter()
-                  // Note: ApprovalTests::Mac::CLionDiffReporter also works on Linux
               })
         {
         }
@@ -4579,6 +4735,15 @@ namespace ApprovalTests
               })
         {
         }
+
+        bool MacDiffReporter::report(std::string received, std::string approved) const
+        {
+            if (!SystemUtils::isMacOs())
+            {
+                return false;
+            }
+            return FirstWorkingReporter::report(received, approved);
+        }
     }
 }
 
@@ -4589,6 +4754,99 @@ namespace ApprovalTests
     bool QuietReporter::report(std::string, std::string) const
     {
         return true;
+    }
+}
+
+// ******************** From: ReporterFactory.cpp
+
+
+#include <map>
+#include <functional>
+
+#define APPROVAL_TESTS_REGISTER_REPORTER(name)                                           \
+    map[#name] = []() { return std::unique_ptr<Reporter>(new name); }
+
+namespace ApprovalTests
+{
+
+    std::string getOsPrefix()
+    {
+        if (SystemUtils::isMacOs())
+        {
+            return "Mac::";
+        }
+
+        if (SystemUtils::isWindowsOs())
+        {
+            return "Windows::";
+        }
+
+        return "Linux::";
+    }
+
+    std::unique_ptr<Reporter>
+    ReporterFactory::createReporter(const std::string& reporterName) const
+    {
+        std::map<std::string, std::function<std::unique_ptr<Reporter>()>> map;
+
+        APPROVAL_TESTS_REGISTER_REPORTER(AutoApproveIfMissingReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(AutoApproveReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(CIBuildOnlyReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(ClipboardReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(DefaultFrontLoadedReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(DefaultReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(DiffReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(EnvironmentVariableReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(QuietReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(TextDiffReporter);
+
+        APPROVAL_TESTS_REGISTER_REPORTER(Linux::BeyondCompareReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Linux::MeldReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Linux::SublimeMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Linux::KDiff3Reporter);
+
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::AraxisMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::BeyondCompareReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::DiffMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::KaleidoscopeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::P4MergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::SublimeMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::KDiff3Reporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::TkDiffReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::VisualStudioCodeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Mac::CLionDiffReporter);
+
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::TortoiseDiffReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::TortoiseGitDiffReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::BeyondCompareReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::WinMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::AraxisMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::CodeCompareReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::SublimeMergeReporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::KDiff3Reporter);
+        APPROVAL_TESTS_REGISTER_REPORTER(Windows::VisualStudioCodeReporter);
+
+        auto osPrefix = getOsPrefix();
+
+        std::vector<std::string> candidateNames = {
+            reporterName,
+            // Allow program names to be specified without Reporter suffix
+            reporterName + "Reporter",
+            // Allow names without os namespace
+            osPrefix + reporterName,
+            osPrefix + reporterName + "Reporter",
+        };
+
+        for (auto& candidateName : candidateNames)
+        {
+            auto iter = map.find(candidateName);
+            if (iter != map.end())
+            {
+                return iter->second();
+            }
+        }
+
+        return std::unique_ptr<Reporter>();
     }
 }
 
@@ -4725,6 +4983,15 @@ namespace ApprovalTests
                   new VisualStudioCodeReporter(),
               })
         {
+        }
+
+        bool WindowsDiffReporter::report(std::string received, std::string approved) const
+        {
+            if (!SystemUtils::isWindowsOs())
+            {
+                return false;
+            }
+            return FirstWorkingReporter::report(received, approved);
         }
     }
 }
