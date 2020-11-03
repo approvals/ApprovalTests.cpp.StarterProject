@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.4.0
+// ApprovalTests.cpp version v.10.5.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,13 +21,60 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 4
+#define APPROVAL_TESTS_VERSION_MINOR 5
 #define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.4.0"
+#define APPROVAL_TESTS_VERSION_STR "10.5.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
      APPROVAL_TESTS_VERSION_PATCH)
+
+// ******************** From: Reporter.h
+
+#include <string>
+
+namespace ApprovalTests
+{
+    class Reporter
+    {
+    public:
+        virtual ~Reporter() = default;
+        virtual bool report(std::string received, std::string approved) const = 0;
+    };
+}
+
+// ******************** From: ReporterFactory.h
+
+
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace ApprovalTests
+{
+    class ReporterFactory
+    {
+    public:
+        using Reporters =
+            std::map<std::string, std::function<std::unique_ptr<Reporter>()>>;
+
+        ReporterFactory();
+
+        std::vector<std::string> allSupportedReporterNames() const;
+
+        std::unique_ptr<Reporter> createReporter(const std::string& reporterName) const;
+
+        std::string findReporterName(const std::string& osPrefix,
+                                     const std::string& reporterName) const;
+
+    private:
+        static Reporters createMap();
+
+        Reporters map;
+    };
+}
 
 // ******************** From: DiffInfo.h
 
@@ -143,20 +190,6 @@ namespace ApprovalTests
             DiffInfo VS_CODE();
         }
     }
-}
-
-// ******************** From: Reporter.h
-
-#include <string>
-
-namespace ApprovalTests
-{
-    class Reporter
-    {
-    public:
-        virtual ~Reporter() = default;
-        virtual bool report(std::string received, std::string approved) const = 0;
-    };
 }
 
 // ******************** From: ConvertForCygwin.h
@@ -337,6 +370,10 @@ namespace ApprovalTests
             s << contents;
             return s.str();
         }
+
+        static std::string toString(const std::wstring& wstr);
+
+        static std::string toString(const wchar_t* wstr);
     };
 }
 
@@ -368,6 +405,12 @@ namespace ApprovalTests
         {
             return StringMaker::toString(contents);
         }
+
+        static std::string leftTrim(std::string s);
+
+        static std::string rightTrim(std::string s);
+
+        static std::string trim(std::string s);
     };
 }
 
@@ -661,6 +704,7 @@ namespace ApprovalTests
     {
     public:
         SectionNameDisposer(TestName& currentTest_, const std::string& scope_name);
+        SectionNameDisposer(const SectionNameDisposer&) = default;
 
         ~SectionNameDisposer();
 
@@ -1200,6 +1244,7 @@ namespace ApprovalTests
 
     public:
         explicit FrontLoadedReporterDisposer(const std::shared_ptr<Reporter>& reporter);
+        FrontLoadedReporterDisposer(const FrontLoadedReporterDisposer&) = default;
 
         ~FrontLoadedReporterDisposer();
     };
@@ -1258,6 +1303,7 @@ namespace ApprovalTests
 
     public:
         explicit SubdirectoryDisposer(std::string subdirectory);
+        SubdirectoryDisposer(const SubdirectoryDisposer&) = default;
 
         ~SubdirectoryDisposer();
     };
@@ -1300,6 +1346,7 @@ namespace ApprovalTests
 
     public:
         explicit DefaultNamerDisposer(NamerCreator namerCreator);
+        DefaultNamerDisposer(const DefaultNamerDisposer&) = default;
 
         ~DefaultNamerDisposer();
     };
@@ -2401,6 +2448,7 @@ auto boost::ut::cfg<boost::ut::override> =
 // ******************** From: HelpMessages.h
 
 #include <string>
+#include <vector>
 
 namespace ApprovalTests
 {
@@ -2410,6 +2458,20 @@ namespace ApprovalTests
         static std::string getMisconfiguredBuildHelp(const std::string& fileName);
 
         static std::string getMisconfiguredMainHelp();
+
+        static std::string
+        getUnknownEnvVarReporterHelp(const std::string& envVarName,
+                                     const std::string& selected,
+                                     const std::vector<std::string>& knowns);
+        static std::string
+        getInvalidEnvVarReporterHelp(const std::string& envVarName,
+                                     const std::string& selected,
+                                     const std::vector<std::string>& knowns);
+
+        static std::string envVarErrorMessage(const std::string& envVarName,
+                                              const std::string& selected,
+                                              const std::vector<std::string>& knowns,
+                                              std::string& helpMessage);
 
         static std::string topAndTailHelpMessage(const std::string& message);
     };
@@ -2609,12 +2671,17 @@ namespace ApprovalTests
 {
     class EnvironmentVariableReporter : public Reporter
     {
-        std::shared_ptr<Reporter> defaultIfNotFound_;
-
     public:
-        EnvironmentVariableReporter();
-        explicit EnvironmentVariableReporter(std::shared_ptr<Reporter> defaultIfNotFound);
         bool report(std::string received, std::string approved) const override;
+
+        bool report(const std::string& envVar,
+                    const std::string& received,
+                    const std::string& approved) const;
+
+        static std::string environmentVariableName();
+
+    private:
+        ReporterFactory factory;
     };
 }
 
@@ -2758,21 +2825,6 @@ namespace ApprovalTests
             bool report(std::string received, std::string approved) const override;
         };
     }
-}
-
-// ******************** From: ReporterFactory.h
-
-
-#include <memory>
-#include <string>
-
-namespace ApprovalTests
-{
-    class ReporterFactory
-    {
-    public:
-        std::unique_ptr<Reporter> createReporter(const std::string& reporterName) const;
-    };
 }
 
 // ******************** From: WindowsReporters.h
@@ -3643,6 +3695,8 @@ namespace ApprovalTests
 
 // ******************** From: HelpMessages.cpp
 
+#include <sstream>
+
 namespace ApprovalTests
 {
 
@@ -3701,6 +3755,66 @@ namespace ApprovalTests
 * https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/TroubleshootingMisconfiguredMain.md
 )";
         return topAndTailHelpMessage(helpMessage);
+    }
+
+    std::string
+    HelpMessages::getUnknownEnvVarReporterHelp(const std::string& envVarName,
+                                               const std::string& selected,
+                                               const std::vector<std::string>& knowns)
+    {
+        std::string helpMessage =
+            R"(* The environment variable [envVarName] contains the value
+* [selected]
+*
+* This reporter is not recognised.
+*
+* Please unset the environment value, or change it to refer to one of the
+* known reporters:
+*
+[known]*
+* For more information, see:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/how_tos/SelectReporterWithEnvironmentVariable.md
+)";
+
+        return envVarErrorMessage(envVarName, selected, knowns, helpMessage);
+    }
+
+    std::string
+    HelpMessages::getInvalidEnvVarReporterHelp(const std::string& envVarName,
+                                               const std::string& selected,
+                                               const std::vector<std::string>& knowns)
+    {
+        std::string helpMessage =
+            R"(* The environment variable [envVarName] contains the value
+* [selected]
+*
+* This reporter is recognised, but cannot be found on this machine.
+*
+* Please unset the environment value, or change it to refer to a working
+* reporter:
+*
+[known]*
+* For more information, see:
+* https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/how_tos/SelectReporterWithEnvironmentVariable.md
+)";
+
+        return envVarErrorMessage(envVarName, selected, knowns, helpMessage);
+    }
+
+    std::string HelpMessages::envVarErrorMessage(const std::string& envVarName,
+                                                 const std::string& selected,
+                                                 const std::vector<std::string>& knowns,
+                                                 std::string& helpMessage)
+    {
+        std::stringstream ss;
+        for (auto& known : knowns)
+        {
+            ss << "* " << known << '\n';
+        }
+        helpMessage = StringUtils::replaceAll(helpMessage, "[selected]", selected);
+        helpMessage = StringUtils::replaceAll(helpMessage, "[envVarName]", envVarName);
+        return topAndTailHelpMessage(
+            StringUtils::replaceAll(helpMessage, "[known]", ss.str()));
     }
 
     std::string HelpMessages::topAndTailHelpMessage(const std::string& message)
@@ -4471,7 +4585,8 @@ namespace ApprovalTests
 namespace ApprovalTests
 {
     DiffReporter::DiffReporter()
-        : FirstWorkingReporter({new Mac::MacDiffReporter(),
+        : FirstWorkingReporter({new EnvironmentVariableReporter(),
+                                new Mac::MacDiffReporter(),
                                 new Linux::LinuxDiffReporter(),
                                 new Windows::WindowsDiffReporter()})
     {
@@ -4482,34 +4597,49 @@ namespace ApprovalTests
 
 namespace ApprovalTests
 {
-    EnvironmentVariableReporter::EnvironmentVariableReporter()
-        : defaultIfNotFound_(std::make_shared<ApprovalTests::DiffReporter>())
-    {
-    }
-
-    EnvironmentVariableReporter::EnvironmentVariableReporter(
-        std::shared_ptr<Reporter> defaultIfNotFound)
-        : defaultIfNotFound_(defaultIfNotFound)
-    {
-    }
-
     bool EnvironmentVariableReporter::report(std::string received,
                                              std::string approved) const
     {
         // Get the env var
-        const auto envVar = SystemUtils::safeGetEnv("APPROVAL_TESTS_USE_REPORTER");
-        if (!envVar.empty())
-        {
-            ReporterFactory factory;
-            auto reporter = factory.createReporter(envVar);
+        const auto envVarName = environmentVariableName();
+        const auto envVar = SystemUtils::safeGetEnv(envVarName.c_str());
+        return report(envVar, received, approved);
+    }
 
-            if (reporter)
-            {
-                return reporter->report(received, approved);
-            }
+    bool EnvironmentVariableReporter::report(const std::string& envVar,
+                                             const std::string& received,
+                                             const std::string& approved) const
+    {
+        if (envVar.empty())
+        {
+            return false;
         }
-        // Or return false
-        return defaultIfNotFound_->report(received, approved);
+
+        auto reporter = factory.createReporter(envVar);
+        auto known = factory.allSupportedReporterNames();
+
+        if (!reporter)
+        {
+            auto message = HelpMessages::getUnknownEnvVarReporterHelp(
+                EnvironmentVariableReporter::environmentVariableName(), envVar, known);
+            throw std::runtime_error(message);
+        }
+
+        auto reporter_worked = reporter->report(received, approved);
+
+        if (!reporter_worked)
+        {
+            auto message = HelpMessages::getInvalidEnvVarReporterHelp(
+                EnvironmentVariableReporter::environmentVariableName(), envVar, known);
+            throw std::runtime_error(message);
+        }
+
+        return reporter_worked;
+    }
+
+    std::string EnvironmentVariableReporter::environmentVariableName()
+    {
+        return "APPROVAL_TESTS_USE_REPORTER";
     }
 }
 
@@ -4784,10 +4914,13 @@ namespace ApprovalTests
         return "Linux::";
     }
 
-    std::unique_ptr<Reporter>
-    ReporterFactory::createReporter(const std::string& reporterName) const
+    ReporterFactory::ReporterFactory() : map(createMap())
     {
-        std::map<std::string, std::function<std::unique_ptr<Reporter>()>> map;
+    }
+
+    ReporterFactory::Reporters ReporterFactory::createMap()
+    {
+        Reporters map;
 
         APPROVAL_TESTS_REGISTER_REPORTER(AutoApproveIfMissingReporter);
         APPROVAL_TESTS_REGISTER_REPORTER(AutoApproveReporter);
@@ -4826,27 +4959,65 @@ namespace ApprovalTests
         APPROVAL_TESTS_REGISTER_REPORTER(Windows::KDiff3Reporter);
         APPROVAL_TESTS_REGISTER_REPORTER(Windows::VisualStudioCodeReporter);
 
+        return map;
+    }
+
+    std::unique_ptr<Reporter>
+    ReporterFactory::createReporter(const std::string& reporterName) const
+    {
         auto osPrefix = getOsPrefix();
 
+        auto key = findReporterName(osPrefix, reporterName);
+
+        if (!key.empty())
+        {
+            return map.at(key)();
+        }
+
+        return std::unique_ptr<Reporter>();
+    }
+
+    std::vector<std::string> ReporterFactory::allSupportedReporterNames() const
+    {
+        std::vector<std::string> result;
+
+        for (auto& p : map)
+        {
+            result.push_back(p.first);
+        }
+
+        return result;
+    }
+
+    std::string ReporterFactory::findReporterName(const std::string& osPrefix,
+                                                  const std::string& reporterName) const
+    {
+        auto trimmedReporterName = StringUtils::trim(reporterName);
+        trimmedReporterName = StringUtils::toLower(trimmedReporterName);
+
         std::vector<std::string> candidateNames = {
-            reporterName,
+            trimmedReporterName,
             // Allow program names to be specified without Reporter suffix
-            reporterName + "Reporter",
+            trimmedReporterName + "reporter",
             // Allow names without os namespace
-            osPrefix + reporterName,
-            osPrefix + reporterName + "Reporter",
+            StringUtils::toLower(osPrefix) + trimmedReporterName,
+            StringUtils::toLower(osPrefix) + trimmedReporterName + "reporter",
         };
 
         for (auto& candidateName : candidateNames)
         {
-            auto iter = map.find(candidateName);
+            auto iter = std::find_if(
+                map.begin(), map.end(), [&](const Reporters::value_type pair) {
+                    return StringUtils::toLower(pair.first) == candidateName;
+                });
+
             if (iter != map.end())
             {
-                return iter->second();
+                return iter->first;
             }
         }
 
-        return std::unique_ptr<Reporter>();
+        return std::string{};
     }
 }
 
@@ -5345,7 +5516,29 @@ namespace ApprovalTests
     }
 }
 
+// ******************** From: StringMaker.cpp
+
+#include <codecvt>
+#include <locale>
+
+namespace ApprovalTests
+{
+    std::string StringMaker::toString(const std::wstring& wstr)
+    {
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utf8_converter;
+        return utf8_converter.to_bytes(wstr);
+    }
+
+    std::string StringMaker::toString(const wchar_t* wstr)
+    {
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utf8_converter;
+        return utf8_converter.to_bytes(wstr);
+    }
+}
+
 // ******************** From: StringUtils.cpp
+
+#include <cctype>
 
 namespace ApprovalTests
 {
@@ -5384,6 +5577,32 @@ namespace ApprovalTests
             return false;
         }
         return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+    }
+
+    std::string StringUtils::leftTrim(std::string s)
+    {
+
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+                    return !std::isspace(ch);
+                }));
+        return s;
+    }
+
+    std::string StringUtils::rightTrim(std::string s)
+    {
+        s.erase(std::find_if(s.rbegin(),
+                             s.rend(),
+                             [](unsigned char ch) { return !std::isspace(ch); })
+                    .base(),
+                s.end());
+        return s;
+    }
+
+    std::string StringUtils::trim(std::string s)
+    {
+        s = leftTrim(s);
+        s = rightTrim(s);
+        return s;
     }
 }
 

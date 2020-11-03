@@ -145,7 +145,7 @@
   <ItemGroup>
     <ClInclude Include="..\code\YourCodeGoesHere.h" />
     <ClInclude Include="..\lib\ApprovalTests.hpp" />
-    <ClInclude Include="..\lib\ApprovalTests.v.10.4.0.hpp" />
+    <ClInclude Include="..\lib\ApprovalTests.v.10.5.0.hpp" />
     <ClInclude Include="..\lib\catch2\include\catch2\catch.hpp" />
     <ClInclude Include="..\lib\catch2\include\catch2\catch.v2.11.0.hpp" />
   </ItemGroup>
