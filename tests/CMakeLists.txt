@@ -1,5 +1,5 @@
 set(TEST_NAME StarterProject.tests)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(SOURCE_FILES
         main.cpp
         DemoTest.cpp
