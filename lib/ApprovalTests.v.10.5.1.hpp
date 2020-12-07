@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.5.0
+// ApprovalTests.cpp version v.10.5.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -22,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 5
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.5.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.5.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -370,10 +370,6 @@ namespace ApprovalTests
             s << contents;
             return s.str();
         }
-
-        static std::string toString(const std::wstring& wstr);
-
-        static std::string toString(const wchar_t* wstr);
     };
 }
 
@@ -2376,7 +2372,7 @@ namespace ApprovalTests
         public:
             auto on(boost::ut::events::test_begin test_begin) -> void
             {
-                std::string name = test_begin.name;
+                std::string name = std::string(test_begin.name);
                 currentTest.sections.emplace_back(name);
                 currentTest.setFileName(test_begin.location.file_name());
 
@@ -5513,26 +5509,6 @@ namespace ApprovalTests
                   << "*    " << ApprovalTestNamer::getCurrentTest().getFileName() << '\n'
                   << "*\n"
                   << "******************************************************\n\n";
-    }
-}
-
-// ******************** From: StringMaker.cpp
-
-#include <codecvt>
-#include <locale>
-
-namespace ApprovalTests
-{
-    std::string StringMaker::toString(const std::wstring& wstr)
-    {
-        static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utf8_converter;
-        return utf8_converter.to_bytes(wstr);
-    }
-
-    std::string StringMaker::toString(const wchar_t* wstr)
-    {
-        static std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> utf8_converter;
-        return utf8_converter.to_bytes(wstr);
     }
 }
 
