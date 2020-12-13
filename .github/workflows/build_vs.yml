@@ -1,6 +1,14 @@
 name: build_vs
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  schedule:
+    - cron: '16 0 * * 6'  # <https://crontab.guru/#16_0_*_*_6> - "At 00:16 on Saturday."
 
 jobs:
   build_vs2017_sln:
