@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.5.1
+// ApprovalTests.cpp version v.10.6.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 5
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.5.1"
+#define APPROVAL_TESTS_VERSION_MINOR 6
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "10.6.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1453,7 +1453,9 @@ namespace ApprovalTests
 
 // ******************** From: FileApprover.h
 
+
 #include <memory>
+#include <functional>
 
 namespace ApprovalTests
 {
@@ -1495,6 +1497,13 @@ namespace ApprovalTests
         static void reportAfterTryingFrontLoadedReporter(const std::string& receivedPath,
                                                          const std::string& approvedPath,
                                                          const Reporter& r);
+
+        using TestPassedNotification = std::function<void()>;
+        static void setTestPassedNotification(TestPassedNotification notification);
+        static void notifyTestPassed();
+
+    private:
+        static TestPassedNotification testPassedNotification_;
     };
 }
 
@@ -1913,6 +1922,22 @@ __FILE__
 );
 #endif // APPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK
 
+// ******************** From: FrameworkIntegrations.h
+
+#include <ApprovalTests.hpp>
+
+namespace ApprovalTests
+{
+    class FrameworkIntegrations
+    {
+    public:
+        static void
+        setTestPassedNotification(FileApprover::TestPassedNotification notification);
+
+        static void setCurrentTest(ApprovalTests::TestName* currentTest);
+    };
+}
+
 // ******************** From: BoostTestApprovals.h
 
 
@@ -1932,7 +1957,9 @@ namespace ApprovalTests
             currentTest.setFileName(path);
 
             currentTest.sections.push_back(test.p_name);
-            ApprovalTests::ApprovalTestNamer::currentTest(&currentTest);
+            ApprovalTests::FrameworkIntegrations::setCurrentTest(&currentTest);
+            ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+                []() { BOOST_CHECK(true); });
         }
 
         void test_unit_finish(boost::unit_test::test_unit const& /*test*/,
@@ -1980,7 +2007,9 @@ struct Catch2ApprovalListener : Catch::TestEventListenerBase
     {
 
         currentTest.setFileName(testInfo.lineInfo.file);
-        ApprovalTests::ApprovalTestNamer::currentTest(&currentTest);
+        ApprovalTests::FrameworkIntegrations::setCurrentTest(&currentTest);
+        ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+            []() { REQUIRE(true); });
     }
 
     virtual void testCaseEnded(Catch::TestCaseStats const& /*testCaseStats*/) override
@@ -2081,8 +2110,9 @@ namespace ApprovalTests
             currentTest->sections.emplace_back(cppUTestToString(shell.getGroup()));
             currentTest->sections.emplace_back(cppUTestToString(shell.getName()));
 
-            ApprovalTests::ApprovalTestNamer::currentTest(currentTest.get());
-
+            ApprovalTests::FrameworkIntegrations::setCurrentTest(currentTest.get());
+            ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+                []() { CHECK_TRUE(true); });
             TestPlugin::preTestAction(shell, result);
         }
 
@@ -2221,7 +2251,9 @@ namespace ApprovalTests
             {
                 currentTest.sections.emplace_back(testInfo.m_name);
                 currentTest.setFileName(doctestToString(testInfo.m_file));
-                ApprovalTestNamer::currentTest(&currentTest);
+                ApprovalTests::FrameworkIntegrations::setCurrentTest(&currentTest);
+                ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+                    []() { REQUIRE(true); });
             }
 
             void test_case_end(const doctest::CurrentTestCaseStats& /*in*/) override
@@ -2325,7 +2357,9 @@ namespace ApprovalTests
                 currentTest.sections.emplace_back(testInfo.name());
             }
 
-            ApprovalTestNamer::currentTest(&currentTest);
+            ApprovalTests::FrameworkIntegrations::setCurrentTest(&currentTest);
+            ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+                []() { EXPECT_TRUE(true); });
         }
     };
 
@@ -2364,6 +2398,8 @@ namespace ApprovalTests
 {
     namespace cfg
     {
+        void notify_success();
+
         class reporter : public boost::ut::reporter<boost::ut::printer>
         {
         private:
@@ -2376,8 +2412,9 @@ namespace ApprovalTests
                 currentTest.sections.emplace_back(name);
                 currentTest.setFileName(test_begin.location.file_name());
 
-                ApprovalTestNamer::currentTest(&currentTest);
-
+                ApprovalTests::FrameworkIntegrations::setCurrentTest(&currentTest);
+                ApprovalTests::FrameworkIntegrations::setTestPassedNotification(
+                    []() { notify_success(); });
                 boost::ut::reporter<boost::ut::printer>::on(test_begin);
             }
 
@@ -2438,6 +2475,19 @@ namespace ApprovalTests
 template <>
 auto boost::ut::cfg<boost::ut::override> =
     boost::ut::runner<ApprovalTests::cfg::reporter>{};
+
+namespace ApprovalTests
+{
+    namespace cfg
+    {
+        void notify_success()
+        {
+            // This needs to be after the registering of our custom listener,
+            // for compilation to succeed.
+            boost::ut::expect(true);
+        }
+    }
+}
 
 #endif // APPROVALS_UT
 
@@ -3178,6 +3228,8 @@ namespace ApprovalTests
         return ComparatorFactory::registerComparator(extensionWithDot, comparator);
     }
 
+    FileApprover::TestPassedNotification FileApprover::testPassedNotification_ = []() {};
+
     void FileApprover::verify(const std::string& receivedPath,
                               const std::string& approvedPath,
                               const ApprovalComparator& comparator)
@@ -3217,6 +3269,7 @@ namespace ApprovalTests
         {
             verify(receivedPath, approvedPath);
             s.cleanUpReceived(receivedPath);
+            notifyTestPassed();
         }
         catch (const ApprovalException&)
         {
@@ -3235,6 +3288,17 @@ namespace ApprovalTests
         {
             r.report(receivedPath, approvedPath);
         }
+    }
+
+    void FileApprover::setTestPassedNotification(
+        FileApprover::TestPassedNotification notification)
+    {
+        testPassedNotification_ = notification;
+    }
+
+    void FileApprover::notifyTestPassed()
+    {
+        testPassedNotification_();
     }
 }
 
@@ -3338,6 +3402,22 @@ namespace ApprovalTests
     Options Options::withScrubber(Scrubber scrubber) const
     {
         return Options(fileOptions_, std::move(scrubber), reporter_, false);
+    }
+}
+
+// ******************** From: FrameworkIntegrations.cpp
+
+namespace ApprovalTests
+{
+    void FrameworkIntegrations::setTestPassedNotification(
+        FileApprover::TestPassedNotification notification)
+    {
+        FileApprover::setTestPassedNotification(notification);
+    }
+
+    void FrameworkIntegrations::setCurrentTest(ApprovalTests::TestName* currentTest)
+    {
+        ApprovalTestNamer::currentTest(currentTest);
     }
 }
 
