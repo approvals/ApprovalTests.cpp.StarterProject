@@ -42,13 +42,13 @@ jobs:
           generator: '"Visual Studio 15 2017"'
           relative_build_dir_path: ''
 
-        - job-name: ubuntu-latest
-          os: ubuntu-latest
+        - job-name: ubuntu-18.04
+          os: ubuntu-18.04
           generator: '"Unix Makefiles"'
           relative_build_dir_path: ''
 
-        - job-name: ubuntu-latest-ninja
-          os: ubuntu-latest
+        - job-name: ubuntu-18.04-ninja
+          os: ubuntu-18.04
           generator: '"Ninja"'
           relative_build_dir_path: '../'
 
