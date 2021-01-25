@@ -1,6 +1,5 @@
 # ApprovalTests.cpp.StarterProject
 
-[![Build Status](https://travis-ci.org/approvals/ApprovalTests.cpp.StarterProject.svg?branch=master)](https://travis-ci.org/approvals/ApprovalTests.cpp.StarterProject)
 [![Build status](https://ci.appveyor.com/api/projects/status/qx0546k6ii57919w/branch/master?svg=true)](https://ci.appveyor.com/project/isidore/approvaltests-cpp-starterproject/branch/master)
 [![Build Status](https://github.com/approvals/ApprovalTests.cpp.StarterProject/workflows/build/badge.svg?branch=master)](https://github.com/approvals/ApprovalTests.cpp.StarterProject/actions?query=branch%3Amaster+workflow%3Abuild)
 [![Build Status](https://github.com/approvals/ApprovalTests.cpp.StarterProject/workflows/build_vs/badge.svg?branch=master)](https://github.com/approvals/ApprovalTests.cpp.StarterProject/actions?query=branch%3Amaster+workflow%3Abuild_vs)
