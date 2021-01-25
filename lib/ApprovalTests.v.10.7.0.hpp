@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.6.0
+// ApprovalTests.cpp version v.10.7.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 6
+#define APPROVAL_TESTS_VERSION_MINOR 7
 #define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.6.0"
+#define APPROVAL_TESTS_VERSION_STR "10.7.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1148,6 +1148,17 @@ namespace ApprovalTests
             (!std::is_same<Options, typename std::decay<T>::type>::value) &&
                 (!std::is_base_of<Reporter, typename std::decay<T>::type>::value),
             R>::type;
+
+        //! Helper to prevent compilation failure when types are wrongly treated as Option,
+        //  Reporter or String:
+        template <typename T, typename R = void>
+        using EnableIfNotOptionsOrReporterOrString = typename std::enable_if<
+            (!std::is_same<Options, typename std::decay<T>::type>::value) &&
+                (!std::is_same<std::string, typename std::decay<T>::type>::value) &&
+                (!std::is_same<char*, typename std::decay<T>::type>::value) &&
+                (!std::is_same<const char*, typename std::decay<T>::type>::value) &&
+                (!std::is_base_of<Reporter, typename std::decay<T>::type>::value),
+            R>::type;
     } // namespace Detail
 }
 
@@ -1507,6 +1518,20 @@ namespace ApprovalTests
     };
 }
 
+// ******************** From: ApprovalUtils.h
+
+#include <iosfwd>
+#include <string>
+
+namespace ApprovalTests
+{
+    class ApprovalUtils
+    {
+    public:
+        static void writeHeader(std::ostream& stream, const std::string& header);
+    };
+}
+
 // ******************** From: Approvals.h
 #include <string>
 #include <functional>
@@ -1588,10 +1613,7 @@ namespace ApprovalTests
                   const Options& options = Options())
         {
             std::stringstream s;
-            if (!header.empty())
-            {
-                s << header << "\n\n\n";
-            }
+            ApprovalUtils::writeHeader(s, header);
             for (auto it = start; it != finish; ++it)
             {
                 converter(*it, s);
@@ -1810,11 +1832,13 @@ namespace ApprovalTests
         ///@{
         template <class Converter, class Container, class... Containers>
         static void verifyAllCombinations(const Options& options,
+                                          const std::string& header,
                                           Converter&& converter,
                                           const Container& input0,
                                           const Containers&... inputs)
         {
             std::stringstream s;
+            ApprovalUtils::writeHeader(s, header);
             CartesianProduct::cartesian_product(
                 serialize<Converter>{s, std::forward<Converter>(converter)},
                 input0,
@@ -1823,12 +1847,32 @@ namespace ApprovalTests
         }
 
         template <class Converter, class... Containers>
-        ApprovalTests::Detail::EnableIfNotOptionsOrReporter<
+        ApprovalTests::Detail::EnableIfNotOptionsOrReporterOrString<
+            Converter> static verifyAllCombinations(const std::string& header,
+                                                    Converter&& converter,
+                                                    const Containers&... inputs)
+        {
+            verifyAllCombinations(
+                Options(), header, std::forward<Converter>(converter), inputs...);
+        }
+
+        template <class Converter, class... Containers>
+        ApprovalTests::Detail::EnableIfNotOptionsOrReporterOrString<
+            Converter> static verifyAllCombinations(const Options& options,
+                                                    Converter&& converter,
+                                                    const Containers&... inputs)
+        {
+            verifyAllCombinations(
+                options, std::string(), std::forward<Converter>(converter), inputs...);
+        }
+
+        template <class Converter, class... Containers>
+        ApprovalTests::Detail::EnableIfNotOptionsOrReporterOrString<
             Converter> static verifyAllCombinations(Converter&& converter,
                                                     const Containers&... inputs)
         {
             verifyAllCombinations(
-                Options(), std::forward<Converter>(converter), inputs...);
+                Options(), std::string(), std::forward<Converter>(converter), inputs...);
         }
         ///@}
     };
@@ -3054,6 +3098,21 @@ namespace ApprovalTests
 }
 
 #ifdef APPROVAL_TESTS_INCLUDE_CPPS
+
+// ******************** From: ApprovalUtils.cpp
+
+#include <ostream>
+
+namespace ApprovalTests
+{
+    void ApprovalUtils::writeHeader(std::ostream& stream, const std::string& header)
+    {
+        if (!header.empty())
+        {
+            stream << header << "\n\n\n";
+        }
+    }
+}
 
 // ******************** From: ComparatorDisposer.cpp
 
