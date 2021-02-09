@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.7.0
+// ApprovalTests.cpp version v.10.7.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -22,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 7
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.7.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.7.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1968,7 +1968,6 @@ __FILE__
 
 // ******************** From: FrameworkIntegrations.h
 
-#include <ApprovalTests.hpp>
 
 namespace ApprovalTests
 {
