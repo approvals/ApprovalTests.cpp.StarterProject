@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.7.1
+// ApprovalTests.cpp version v.10.8.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 7
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.7.1"
+#define APPROVAL_TESTS_VERSION_MINOR 8
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "10.8.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -640,10 +640,15 @@ namespace ApprovalTests
 
     public:
         static std::string getMisconfiguredBuildHelp(const std::string& fileName);
+        std::string checkParentDirectoriesForFile(const std::string& file);
 
         std::vector<std::string> sections;
+        static std::string directoryPrefix;
 
     private:
+        std::string handleBoostQuirks() const;
+        std::string findFileName(const std::string& file);
+
         std::string fileName;
     };
 
@@ -1937,34 +1942,6 @@ namespace ApprovalTests
                                  const std::string& approved);
     };
 }
-
-// ******************** From: CheckFileMacroIsAbsolute.h
-
-// Maintenance note: the following help message must be short, and
-// not contain any newline characters, as their display looks messy
-// in some compiler outputs.
-//
-// This static_assert can be disabled by
-// defining APPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK.
-// This can be done on the CMake command line with:
-// -DCMAKE_CXX_FLAGS_INIT=-DAPPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK
-//
-// ApprovalTests will then check the validity of __FILE__
-// at run-time instead, for test frameworks that use it to
-// detect the source file name.
-
-#ifndef APPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK
-// clang-format off
-static_assert(
-    (__FILE__[1] == ':') ||
-    (__FILE__[0] == '/'),
-"There seems to be a problem with your build configuration, probably with Ninja. "
-"Please visit https://github.com/approvals/ApprovalTests.cpp/blob/master/doc/TroubleshootingMisconfiguredBuild.md "
-"The filename is: "
-__FILE__
-    // clang-format on
-);
-#endif // APPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK
 
 // ******************** From: FrameworkIntegrations.h
 
@@ -3611,6 +3588,8 @@ namespace ApprovalTests
 
 namespace ApprovalTests
 {
+    std::string TestName::directoryPrefix;
+
     const std::string& TestName::getFileName() const
     {
         checkBuildConfiguration(fileName);
@@ -3619,7 +3598,41 @@ namespace ApprovalTests
 
     void TestName::setFileName(const std::string& file)
     {
-        fileName = SystemUtils::checkFilenameCase(file);
+        fileName = file.empty() ? handleBoostQuirks() : findFileName(file);
+    }
+
+    std::string TestName::findFileName(const std::string& file)
+    {
+        auto newFileName = checkParentDirectoriesForFile(file);
+        return SystemUtils::checkFilenameCase(newFileName);
+    }
+
+    std::string TestName::checkParentDirectoriesForFile(const std::string& file)
+    {
+        auto newFileName = directoryPrefix + file;
+
+        if (!FileUtils::fileExists(newFileName))
+        {
+            // If the build system is Ninja, try looking several levels higher...
+            std::string backOne = ".." + SystemUtils::getDirectorySeparator();
+            std::string prefix;
+            for (int i = 0; i != 10; i++)
+            {
+                prefix += backOne;
+                auto candidateName = prefix + file;
+                if (FileUtils::fileExists(candidateName))
+                {
+                    directoryPrefix = prefix;
+                    return candidateName;
+                }
+            }
+        }
+        return newFileName;
+    }
+
+    std::string TestName::handleBoostQuirks() const
+    {
+        return "";
     }
 
     void TestName::checkBuildConfiguration(const std::string& fileName)
