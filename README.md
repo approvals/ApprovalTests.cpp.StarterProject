@@ -16,6 +16,12 @@ Works on Mac, Linux and Windows.
 
 Feel free to copy and go...
 
+## Machine Setup (Windows)
+
+You can set up a machine from scratch by running the [PowerShell script: install.windows.ps1](install.windows.ps1). See the comments inside it for how to run it.
+
+If you already have a Windows environment, but just not C++ tools, you can run the second half of that script.
+
 ## Starting Point
 
 The tests in [NewTest](https://github.com/approvals/ApprovalTests.cpp.StarterProject/blob/master/tests/NewTest.cpp) should pass, and then you should delete/modify as needed to get started.
