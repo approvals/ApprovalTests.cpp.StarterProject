@@ -57,7 +57,7 @@ jobs:
 
         - job-name:  macOS-latest-unity
           os: macOS-latest
-          generator: '"Unix Makefiles" -DCMAKE_UNITY_BUILD=yes -DCMAKE_UNITY_BUILD_BATCH_SIZE=50'
+          generator: '"Unix Makefiles" -DCMAKE_UNITY_BUILD=yes'
           relative_build_dir_path: ''
 
         - job-name:  macOS-latest-ninja
@@ -67,7 +67,7 @@ jobs:
 
         - job-name:  macOS-latest-ninja-unity
           os: macOS-latest
-          generator: '"Ninja" -DCMAKE_UNITY_BUILD=yes -DCMAKE_UNITY_BUILD_BATCH_SIZE=50 -DCMAKE_CXX_FLAGS_INIT=-DAPPROVAL_TESTS_DISABLE_FILE_MACRO_CHECK'
+          generator: '"Ninja" -DCMAKE_UNITY_BUILD=yes'
           relative_build_dir_path: ''
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.job-name }}
