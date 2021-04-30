@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.9.0
+// ApprovalTests.cpp version v.10.9.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -22,8 +22,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 9
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.9.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.9.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -974,6 +974,23 @@ namespace ApprovalTests
     };
 }
 
+// ******************** From: FmtToString.h
+#ifdef FMT_VERSION
+namespace ApprovalTests
+{
+    class FmtToString
+    {
+    public:
+        template <typename T> static std::string toString(const T& printable)
+        {
+            (void)printable;
+            return fmt::to_string(printable);
+        }
+    };
+
+}
+#endif
+
 // ******************** From: SubdirectoryDisposer.h
 
 
@@ -1659,23 +1676,6 @@ namespace ApprovalTests
         addTestCaseNameRedundancyCheck(const Comparator& comparator);
     };
 }
-
-// ******************** From: FmtToString.h
-#ifdef FMT_VERSION
-namespace ApprovalTests
-{
-    class FmtToString
-    {
-    public:
-        template <typename T> static std::string toString(const T& printable)
-        {
-            (void)printable;
-            return fmt::to_string(printable);
-        }
-    };
-
-}
-#endif
 
 // ******************** From: MoreHelpMessages.h
 
