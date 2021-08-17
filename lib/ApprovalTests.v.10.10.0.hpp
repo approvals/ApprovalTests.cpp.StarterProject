@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.9.1
+// ApprovalTests.cpp version v.10.10.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 
 //----------------------------------------------------------------------
@@ -21,9 +21,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 9
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.9.1"
+#define APPROVAL_TESTS_VERSION_MINOR 10
+#define APPROVAL_TESTS_VERSION_PATCH 0
+#define APPROVAL_TESTS_VERSION_STR "10.10.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -2006,6 +2006,38 @@ namespace ApprovalTests
 
 } // namespace ApprovalTests
 
+// ******************** From: Storyboard.h
+
+#include <iosfwd>
+#include <sstream>
+#include <functional>
+
+namespace ApprovalTests
+{
+    class Storyboard
+    {
+    private:
+        std::stringstream output_;
+        int frameCount_ = 0;
+        bool addNewLineBeforeNextFrame_ = false;
+
+    public:
+        Storyboard& addDescription(const std::string& description);
+
+        Storyboard& addDescriptionWithData(const std::string& description,
+                                           const std::string& data);
+
+        Storyboard& addFrame(const std::string& frame);
+
+        Storyboard& addFrame(const std::string& title, const std::string& frame);
+
+        Storyboard& addFrames(int numberOfFrames,
+                              const std::function<std::string(int)>& function);
+
+        friend std::ostream& operator<<(std::ostream& os, const Storyboard& board);
+    };
+}
+
 // ******************** From: TextFileComparator.h
 
 
@@ -3178,6 +3210,22 @@ namespace ApprovalTests
     };
 }
 
+// ******************** From: Grid.h
+#include <sstream>
+#include <functional>
+
+namespace ApprovalTests
+{
+    class Grid
+    {
+    public:
+        static std::string print(int width,
+                                 int height,
+                                 std::function<void(int, int, std::ostream&)> printCell);
+        static std::string print(int width, int height, std::string text);
+    };
+}
+
 #ifdef APPROVAL_TESTS_INCLUDE_CPPS
 
 // ******************** From: ApprovalUtils.cpp
@@ -3192,6 +3240,67 @@ namespace ApprovalTests
         {
             stream << header << "\n\n\n";
         }
+    }
+}
+
+// ******************** From: Storyboard.cpp
+
+namespace ApprovalTests
+{
+    Storyboard& Storyboard::addDescription(const std::string& description)
+    {
+        output_ << description << "\n";
+        addNewLineBeforeNextFrame_ = true;
+        return *this;
+    }
+
+    Storyboard& Storyboard::addDescriptionWithData(const std::string& description,
+                                                   const std::string& data)
+    {
+        output_ << description << ": " << data << "\n";
+        addNewLineBeforeNextFrame_ = true;
+        return *this;
+    }
+
+    Storyboard& Storyboard::addFrame(const std::string& frame)
+    {
+        if (frameCount_ == 0)
+        {
+            return addFrame("Initial Frame", frame);
+        }
+        else
+        {
+            return addFrame("Frame #" + std::to_string(frameCount_), frame);
+        }
+    }
+
+    Storyboard& Storyboard::addFrame(const std::string& title, const std::string& frame)
+    {
+        if (addNewLineBeforeNextFrame_)
+        {
+            output_ << '\n';
+            addNewLineBeforeNextFrame_ = false;
+        }
+        output_ << title << ":\n";
+        output_ << frame << "\n\n";
+        frameCount_ += 1;
+        return *this;
+    }
+
+    Storyboard& Storyboard::addFrames(int numberOfFrames,
+                                      const std::function<std::string(int)>& function)
+    {
+        for (int frame = 1; frame <= numberOfFrames; ++frame)
+        {
+            addFrame(function(frame));
+        }
+        return *this;
+    }
+
+    std::ostream& operator<<(std::ostream& os, const Storyboard& board)
+    {
+        os << board.output_.str();
+        return os;
     }
 }
 
@@ -5946,6 +6055,31 @@ namespace ApprovalTests
     {
         auto cmd = getCommandLineForCopy(source, destination, SystemUtils::isWindowsOs());
         SystemUtils::runSystemCommandOrThrow(cmd);
+    }
+}
+
+// ******************** From: Grid.cpp
+namespace ApprovalTests
+{
+    std::string Grid::print(int width,
+                            int height,
+                            std::function<void(int, int, std::ostream&)> printCell)
+    {
+        std::stringstream s;
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                printCell(x, y, s);
+            }
+            s << '\n';
+        }
+        return s.str();
+    }
+    std::string Grid::print(int width, int height, std::string text)
+    {
+        return print(
+            width, height, [&](int /*x*/, int /*y*/, std::ostream& os) { os << text; });
     }
 }
 
