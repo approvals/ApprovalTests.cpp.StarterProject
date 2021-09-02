@@ -1,5 +1,10 @@
-// ApprovalTests.cpp version v.10.10.0
+// ApprovalTests.cpp version v.10.11.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
+//
+// Copyright (c) 2021 Llewellyn Falco and Clare Macrae. All rights reserved.
+//
+// Distributed under the Apache 2.0 License
+// See https://opensource.org/licenses/Apache-2.0
 
 //----------------------------------------------------------------------
 // Welcome to Approval Tests.
@@ -21,9 +26,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 10
+#define APPROVAL_TESTS_VERSION_MINOR 11
 #define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.10.0"
+#define APPROVAL_TESTS_VERSION_STR "10.11.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -273,10 +278,77 @@ namespace ApprovalTests
     };
 }
 
+// ******************** From: ApprovalsMacroDefaults.h
+
+// This file intentionally left blank.
+
+// ******************** From: Macros.h
+
+
+// Use this in places where we have parameters that are sometimes unused,
+// e.g. because of #if
+// See https://stackoverflow.com/a/1486931/104370
+#define APPROVAL_TESTS_UNUSED(expr)                                                      \
+    do                                                                                   \
+    {                                                                                    \
+        (void)(expr);                                                                    \
+    } while (0)
+
+#if __cplusplus >= 201703L
+#define APPROVAL_TESTS_NO_DISCARD [[nodiscard]]
+#else
+#define APPROVAL_TESTS_NO_DISCARD
+#endif
+
+#if (__cplusplus >= 201402L)
+#define APPROVAL_TESTS_DEPRECATED(text) [[deprecated(text)]]
+#define APPROVAL_TESTS_DEPRECATED_CPP11(text)
+#else
+#define APPROVAL_TESTS_DEPRECATED(text)
+#define APPROVAL_TESTS_DEPRECATED_CPP11(text)                                            \
+    MoreHelpMessages::deprecatedFunctionCalled(text, __FILE__, __LINE__);
+#endif
+
+#define APPROVAL_TESTS_REGISTER_MAIN_DIRECTORY                                           \
+    auto approval_tests_registered_main_directory =                                      \
+        ApprovalTests::TestName::registerRootDirectoryFromMainFile(__FILE__);
+
+// ******************** From: EmptyFileCreatorFactory.h
+#include <functional>
+
+namespace ApprovalTests
+{
+    using EmptyFileCreator = std::function<void(std::string)>;
+
+    class EmptyFileCreatorFactory
+    {
+    public:
+        static void defaultCreator(std::string fullFilePath);
+        static EmptyFileCreator currentCreator;
+    };
+}
+
+// ******************** From: EmptyFileCreatorDisposer.h
+
+
+namespace ApprovalTests
+{
+    class APPROVAL_TESTS_NO_DISCARD EmptyFileCreatorDisposer
+    {
+    private:
+        EmptyFileCreator previous_result;
+
+    public:
+        explicit EmptyFileCreatorDisposer(EmptyFileCreator creator);
+        EmptyFileCreatorDisposer(const EmptyFileCreatorDisposer&) = default;
+
+        ~EmptyFileCreatorDisposer();
+    };
+}
+
 // ******************** From: FileUtils.h
 
 #include <string>
-
 namespace ApprovalTests
 {
     class FileUtils
@@ -285,6 +357,8 @@ namespace ApprovalTests
         static bool fileExists(const std::string& path);
 
         static int fileSize(const std::string& path);
+
+        static EmptyFileCreatorDisposer useEmptyFileCreator(EmptyFileCreator creator);
 
         static void ensureFileExists(const std::string& fullFilePath);
 
@@ -324,41 +398,6 @@ extern "C"
 #endif
 
 #endif // APPROVAL_TESTS_MINGW
-
-// ******************** From: ApprovalsMacroDefaults.h
-
-// This file intentionally left blank.
-
-// ******************** From: Macros.h
-
-
-// Use this in places where we have parameters that are sometimes unused,
-// e.g. because of #if
-// See https://stackoverflow.com/a/1486931/104370
-#define APPROVAL_TESTS_UNUSED(expr)                                                      \
-    do                                                                                   \
-    {                                                                                    \
-        (void)(expr);                                                                    \
-    } while (0)
-
-#if __cplusplus >= 201703L
-#define APPROVAL_TESTS_NO_DISCARD [[nodiscard]]
-#else
-#define APPROVAL_TESTS_NO_DISCARD
-#endif
-
-#if (__cplusplus >= 201402L)
-#define APPROVAL_TESTS_DEPRECATED(text) [[deprecated(text)]]
-#define APPROVAL_TESTS_DEPRECATED_CPP11(text)
-#else
-#define APPROVAL_TESTS_DEPRECATED(text)
-#define APPROVAL_TESTS_DEPRECATED_CPP11(text)                                            \
-    MoreHelpMessages::deprecatedFunctionCalled(text, __FILE__, __LINE__);
-#endif
-
-#define APPROVAL_TESTS_REGISTER_MAIN_DIRECTORY                                           \
-    auto approval_tests_registered_main_directory =                                      \
-        ApprovalTests::TestName::registerRootDirectoryFromMainFile(__FILE__);
 
 // ******************** From: StringMaker.h
 
@@ -716,8 +755,6 @@ namespace ApprovalTests
 
         std::string getTestName() const;
 
-        static bool isForbidden(char c);
-
         static std::string convertToFileName(const std::string& fileName);
 
         static TestName& getCurrentTest();
@@ -990,6 +1027,40 @@ namespace ApprovalTests
 
 }
 #endif
+
+// ******************** From: FileNameSanitizerFactory.h
+#include <functional>
+
+namespace ApprovalTests
+{
+    using FileNameSanitizer = std::function<std::string(std::string)>;
+
+    class FileNameSanitizerFactory
+    {
+    public:
+        static bool isForbidden(char c);
+        static std::string defaultSanitizer(std::string fileName);
+        static FileNameSanitizer currentSanitizer;
+    };
+}
+
+// ******************** From: FileNameSanitizerDisposer.h
+
+
+namespace ApprovalTests
+{
+    class APPROVAL_TESTS_NO_DISCARD FileNameSanitizerDisposer
+    {
+    private:
+        FileNameSanitizer previous_result;
+
+    public:
+        explicit FileNameSanitizerDisposer(FileNameSanitizer sanitizer);
+        FileNameSanitizerDisposer(const FileNameSanitizerDisposer&) = default;
+
+        ~FileNameSanitizerDisposer();
+    };
+}
 
 // ******************** From: SubdirectoryDisposer.h
 
@@ -1584,6 +1655,12 @@ namespace ApprovalTests
         static DefaultNamerDisposer useAsDefaultNamer(NamerCreator namerCreator)
         {
             return DefaultNamerDisposer(std::move(namerCreator));
+        }
+
+        /// See \userguide{Namers,converting-test-names-to-valid-filenames,Converting Test Names to Valid FileNames}
+        static FileNameSanitizerDisposer useFileNameSanitizer(FileNameSanitizer sanitizer)
+        {
+            return FileNameSanitizerDisposer(sanitizer);
         }
         ///@}
     };
@@ -3961,27 +4038,9 @@ namespace ApprovalTests
         return convertToFileName(ext.str());
     }
 
-    bool ApprovalTestNamer::isForbidden(char c)
-    {
-        static std::string forbiddenChars("\\/:?\"<>|' ");
-        return std::string::npos != forbiddenChars.find(c);
-    }
-
     std::string ApprovalTestNamer::convertToFileName(const std::string& fileName)
     {
-        std::stringstream result;
-        for (auto ch : fileName)
-        {
-            if (!isForbidden(ch))
-            {
-                result << ch;
-            }
-            else
-            {
-                result << "_";
-            }
-        }
-        return result.str();
+        return FileNameSanitizerFactory::currentSanitizer(fileName);
     }
 
     TestName& ApprovalTestNamer::getCurrentTest()
@@ -4165,6 +4224,56 @@ namespace ApprovalTests
     {
         return filePath;
     }
+}
+
+// ******************** From: FileNameSanitizerDisposer.cpp
+#include <sstream>
+
+namespace ApprovalTests
+{
+
+    FileNameSanitizerDisposer::FileNameSanitizerDisposer(FileNameSanitizer sanitizer)
+    {
+        previous_result = std::move(FileNameSanitizerFactory::currentSanitizer);
+        FileNameSanitizerFactory::currentSanitizer = std::move(sanitizer);
+    }
+
+    FileNameSanitizerDisposer::~FileNameSanitizerDisposer()
+    {
+        FileNameSanitizerFactory::currentSanitizer = std::move(previous_result);
+    }
+}
+
+// ******************** From: FileNameSanitizerFactory.cpp
+#include <sstream>
+namespace ApprovalTests
+{
+    bool FileNameSanitizerFactory::isForbidden(char c)
+    {
+        static std::string forbiddenChars("\\/:?\"<>|' ");
+        return std::string::npos != forbiddenChars.find(c);
+    }
+
+    std::string FileNameSanitizerFactory::defaultSanitizer(std::string fileName)
+    {
+        std::stringstream result;
+        for (auto ch : fileName)
+        {
+            if (!isForbidden(ch))
+            {
+                result << ch;
+            }
+            else
+            {
+                result << "_";
+            }
+        }
+        return result.str();
+    }
+
+    FileNameSanitizer FileNameSanitizerFactory::currentSanitizer =
+        FileNameSanitizerFactory::defaultSanitizer;
+
 }
 
 // ******************** From: HelpMessages.cpp
@@ -5899,6 +6008,39 @@ namespace ApprovalTests
     }
 }
 
+// ******************** From: EmptyFileCreatorDisposer.cpp
+#include <sstream>
+
+namespace ApprovalTests
+{
+
+    EmptyFileCreatorDisposer::EmptyFileCreatorDisposer(EmptyFileCreator creator)
+    {
+        previous_result = std::move(EmptyFileCreatorFactory::currentCreator);
+        EmptyFileCreatorFactory::currentCreator = std::move(creator);
+    }
+
+    EmptyFileCreatorDisposer::~EmptyFileCreatorDisposer()
+    {
+        EmptyFileCreatorFactory::currentCreator = std::move(previous_result);
+    }
+}
+
+// ******************** From: EmptyFileCreatorFactory.cpp
+namespace ApprovalTests
+{
+
+    void EmptyFileCreatorFactory::defaultCreator(std::string fullFilePath)
+    {
+        StringWriter s("", "");
+        s.write(fullFilePath);
+    }
+
+    EmptyFileCreator EmptyFileCreatorFactory::currentCreator =
+        EmptyFileCreatorFactory::defaultCreator;
+
+}
+
 // ******************** From: ExceptionCollector.cpp
 
 namespace ApprovalTests
@@ -5973,12 +6115,16 @@ namespace ApprovalTests
         return int(statbuf.st_size);
     }
 
+    EmptyFileCreatorDisposer FileUtils::useEmptyFileCreator(EmptyFileCreator creator)
+    {
+        return EmptyFileCreatorDisposer(creator);
+    }
+
     void FileUtils::ensureFileExists(const std::string& fullFilePath)
     {
         if (!fileExists(fullFilePath))
         {
-            StringWriter s("", "");
-            s.write(fullFilePath);
+            EmptyFileCreatorFactory::currentCreator(fullFilePath);
         }
     }
 
@@ -6031,6 +6177,7 @@ namespace ApprovalTests
         }
         out << content;
     }
+
 }
 
 // ******************** From: FileUtilsSystemSpecific.cpp
