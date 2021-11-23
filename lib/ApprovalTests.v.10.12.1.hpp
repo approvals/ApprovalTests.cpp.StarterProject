@@ -1,4 +1,4 @@
-// ApprovalTests.cpp version v.10.12.0
+// ApprovalTests.cpp version v.10.12.1
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 //
 // Copyright (c) 2021 Llewellyn Falco and Clare Macrae. All rights reserved.
@@ -27,8 +27,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 12
-#define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.12.0"
+#define APPROVAL_TESTS_VERSION_PATCH 1
+#define APPROVAL_TESTS_VERSION_STR "10.12.1"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -5163,7 +5163,7 @@ namespace ApprovalTests
             APPROVAL_TESTS_MACROS_ENTRY(
                 KDIFF3,
                 DiffInfo("/Applications/kdiff3.app/Contents/MacOS/kdiff3",
-                         "{Received} {Approved} -m",
+                         "{Received} {Approved} -m -o {Approved}",
                          Type::TEXT))
 
             APPROVAL_TESTS_MACROS_ENTRY(
@@ -5215,7 +5215,10 @@ namespace ApprovalTests
                          Type::TEXT))
 
             // More ideas available from: https://www.tecmint.com/best-linux-file-diff-tools-comparison/
-            APPROVAL_TESTS_MACROS_ENTRY(KDIFF3, DiffInfo("kdiff3", Type::TEXT))
+            APPROVAL_TESTS_MACROS_ENTRY(KDIFF3,
+                                        DiffInfo("kdiff3",
+                                                 "{Received} {Approved} -m -o {Approved}",
+                                                 Type::TEXT))
 
             APPROVAL_TESTS_MACROS_ENTRY(MELD, DiffInfo("meld", Type::TEXT))
 
@@ -5277,7 +5280,8 @@ namespace ApprovalTests
                          Type::TEXT))
 
             APPROVAL_TESTS_MACROS_ENTRY(KDIFF3,
-                                        DiffInfo("{ProgramFiles}KDiff3\\kdiff3.exe",
+                                        DiffInfo("{ProgramFiles}KDiff3\\bin\\kdiff3.exe",
+                                                 "{Received} {Approved} -m -o {Approved}",
                                                  Type::TEXT))
 
             APPROVAL_TESTS_MACROS_ENTRY(
