@@ -30,17 +30,12 @@ jobs:
         include:
         - job-name: windows-latest
           os: windows-latest
-          generator: '"Visual Studio 16 2019"'
+          generator: '"Visual Studio 17 2022"'
           relative_build_dir_path: ''
 
         - job-name: windows-latest (clangcl)
           os: windows-latest
-          generator: '"Visual Studio 16 2019" -T "clangcl"'
-          relative_build_dir_path: ''
-
-        - job-name: windows-2016
-          os: windows-2016
-          generator: '"Visual Studio 15 2017"'
+          generator: '"Visual Studio 17 2022" -T "clangcl"'
           relative_build_dir_path: ''
 
         - job-name: ubuntu-18.04
