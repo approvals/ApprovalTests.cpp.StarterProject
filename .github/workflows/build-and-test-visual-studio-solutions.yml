@@ -10,27 +10,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_vs2017_sln:
-    runs-on: windows-2016
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: build
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
-          msbuild /p:Configuration=Debug visual-studio-2017/StarterProject.sln
-          msbuild /p:Configuration=Release visual-studio-2017/StarterProject.sln
-          msbuild /p:Platform=x86 /p:Configuration=Debug visual-studio-2017/StarterProject.sln
-          msbuild /p:Platform=x86 /p:Configuration=Release visual-studio-2017/StarterProject.sln
-        shell: cmd
-
-      - name: test
-        run: |
-          visual-studio-2017\x64\Debug\StarterProject.exe
-          visual-studio-2017\x64\Release\StarterProject.exe
-          visual-studio-2017\Debug\StarterProject.exe
-          visual-studio-2017\Release\StarterProject.exe
-
   build_vs2019_sln:
     runs-on: windows-2019
     steps:
