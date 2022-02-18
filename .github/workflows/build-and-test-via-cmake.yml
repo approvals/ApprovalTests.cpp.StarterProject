@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - '*'
+  schedule:
+    - cron: '3 14 1 * *'  # <https://crontab.guru/#3_14_1_*_*> - "Once a month"
   workflow_dispatch:
 
 jobs:
