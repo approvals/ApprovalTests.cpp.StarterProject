@@ -1,7 +1,7 @@
-// ApprovalTests.cpp version v.10.12.1
+// ApprovalTests.cpp version v.10.12.2
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 //
-// Copyright (c) 2021 Llewellyn Falco and Clare Macrae. All rights reserved.
+// Copyright (c) 2022 Llewellyn Falco and Clare Macrae. All rights reserved.
 //
 // Distributed under the Apache 2.0 License
 // See https://opensource.org/licenses/Apache-2.0
@@ -27,8 +27,8 @@
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
 #define APPROVAL_TESTS_VERSION_MINOR 12
-#define APPROVAL_TESTS_VERSION_PATCH 1
-#define APPROVAL_TESTS_VERSION_STR "10.12.1"
+#define APPROVAL_TESTS_VERSION_PATCH 2
+#define APPROVAL_TESTS_VERSION_STR "10.12.2"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -1380,6 +1380,10 @@ namespace ApprovalTests
 
     public:
         explicit ExistingFileNamer(std::string filePath_, const Options& options);
+
+        ExistingFileNamer(const ExistingFileNamer& x);
+
+        ExistingFileNamer(ExistingFileNamer&& x) noexcept;
 
         virtual std::string getApprovedFile(std::string extensionWithDot) const override;
 
@@ -4238,6 +4242,16 @@ namespace ApprovalTests
     {
     }
 
+    ExistingFileNamer::ExistingFileNamer(const ExistingFileNamer& x)
+        : filePath(x.filePath), options_(x.options_)
+    {
+    }
+
+    ExistingFileNamer::ExistingFileNamer(ExistingFileNamer&& x) noexcept
+        : filePath(std::move(x.filePath)), options_(x.options_)
+    {
+    }
+
     std::string ExistingFileNamer::getApprovedFile(std::string extensionWithDot) const
     {
         return options_.getNamer()->getApprovedFile(extensionWithDot);
@@ -4491,12 +4505,17 @@ namespace ApprovalTests
 
 namespace ApprovalTests
 {
-    // clang-format off
-    auto path = "{TestSourceDirectory}/{ApprovalsSubdirectory}/{ApprovedOrReceived}/{TestFileName}.{TestCaseName}.{FileExtension}";
-    // clang-format on
+    std::string separateDirectoryPath()
+    {
+        // clang-format off
+        auto path = "{TestSourceDirectory}/{ApprovalsSubdirectory}/{ApprovedOrReceived}/{TestFileName}.{TestCaseName}.{FileExtension}";
+        // clang-format on
+        return path;
+    }
+
     SeparateApprovedAndReceivedDirectoriesNamer::
         SeparateApprovedAndReceivedDirectoriesNamer()
-        : TemplatedCustomNamer(path)
+        : TemplatedCustomNamer(separateDirectoryPath())
     {
     }
 
