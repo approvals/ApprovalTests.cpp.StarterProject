@@ -147,7 +147,7 @@
     <ClInclude Include="..\lib\ApprovalTests.hpp" />
     <ClInclude Include="..\lib\ApprovalTests.v.10.12.2.hpp" />
     <ClInclude Include="..\lib\catch2\include\catch2\catch.hpp" />
-    <ClInclude Include="..\lib\catch2\include\catch2\catch.v2.11.0.hpp" />
+    <ClInclude Include="..\lib\catch2\include\catch2\catch.v2.13.10.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\tests\DemoTest.cpp" />
