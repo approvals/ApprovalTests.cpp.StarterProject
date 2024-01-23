@@ -2,18 +2,14 @@ name: build
 
 on:
   push:
-    branches:
-      - '*'
   pull_request:
-    branches:
-      - '*'
   schedule:
     - cron: '3 14 1 * *'  # <https://crontab.guru/#3_14_1_*_*> - "Once a month"
   workflow_dispatch:
 
 jobs:
   clang-format:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - uses: DoozyX/clang-format-lint-action@v0.5
@@ -38,13 +34,13 @@ jobs:
           generator: '"Visual Studio 17 2022" -T "clangcl"'
           relative_build_dir_path: ''
 
-        - job-name: ubuntu-18.04
-          os: ubuntu-18.04
+        - job-name: ubuntu-latest
+          os: ubuntu-latest
           generator: '"Unix Makefiles"'
           relative_build_dir_path: ''
 
-        - job-name: ubuntu-18.04-ninja
-          os: ubuntu-18.04
+        - job-name: ubuntu-18.04-latest
+          os: ubuntu-latest
           generator: '"Ninja"'
           relative_build_dir_path: '../'
 
