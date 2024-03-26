@@ -18,6 +18,7 @@ jobs:
       - name: create project
         run: |
           call create_visual_studio_project.bat
+        shell: cmd
 
       - name: build
         run: |
