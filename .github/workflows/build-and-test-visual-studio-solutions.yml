@@ -17,7 +17,7 @@ jobs:
 
       - name: create project
         run: |
-          create_visual_studio_project.bat
+          call create_visual_studio_project.bat
 
       - name: build
         run: |
