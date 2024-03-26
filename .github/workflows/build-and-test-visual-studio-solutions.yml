@@ -10,10 +10,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_vs2019_sln:
+  build_visual_studio_sln:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
       - name: create project
         run: |
