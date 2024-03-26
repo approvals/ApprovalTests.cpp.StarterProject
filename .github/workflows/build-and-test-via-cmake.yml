@@ -66,7 +66,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.job-name }}
     steps:
-    - uses: actions/checkout@4
+    - uses: actions/checkout@v4
     - uses: seanmiddleditch/gha-setup-ninja@v4
       if: contains(matrix.generator, 'Ninja')
 
