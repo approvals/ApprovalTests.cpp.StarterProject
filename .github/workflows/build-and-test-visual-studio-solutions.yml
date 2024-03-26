@@ -22,16 +22,12 @@ jobs:
 
       - name: build
         run: |
+          cd visual-studio-2019
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
-          msbuild /p:Configuration=Debug visual-studio-2019/StarterProject2019.sln
-          msbuild /p:Configuration=Release visual-studio-2019/StarterProject2019.sln
-          msbuild /p:Platform=x86 /p:Configuration=Debug visual-studio-2019/StarterProject2019.sln
-          msbuild /p:Platform=x86 /p:Configuration=Release visual-studio-2019/StarterProject2019.sln
+          cmake --build .
         shell: cmd
 
       - name: test
         run: |
-          visual-studio-2019\x64\Debug\StarterProject2019.exe
-          visual-studio-2019\x64\Release\StarterProject2019.exe
-          visual-studio-2019\Debug\StarterProject2019.exe
-          visual-studio-2019\Release\StarterProject2019.exe
+          cd visual-studio-2019
+          ctest . -C debug
