@@ -1,6 +1,7 @@
 # ApprovalTests.cpp.StarterProject
 
-[![Build Status](../../workflows/build/badge.svg?branch=master)](../../actions?query=branch%3Amaster+workflow%3Abuild)
+
+[![build](../../actions/workflows/build-and-test-via-cmake.yml/badge.svg)](../../actions/workflows/build-and-test-via-cmake.yml)
 [![Build Status](../../workflows/build_vs/badge.svg?branch=master)](../../actions?query=branch%3Amaster+workflow%3Abuild_vs)
 
 
