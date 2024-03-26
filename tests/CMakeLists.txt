@@ -6,7 +6,7 @@ set(SOURCE_FILES
         NewTest.cpp
         Tutorial.cpp)
 add_executable(${TEST_NAME} ${SOURCE_FILES})
-target_link_libraries(${TEST_NAME} StarterProject.code ApprovalTests::ApprovalTests Catch2::Catch2)
+target_link_libraries(${TEST_NAME} StarterProject.code ApprovalTests::ApprovalTests Catch2::Catch2WithMain)
 target_compile_definitions(${TEST_NAME} PRIVATE -DAPPROVAL_TESTS_HIDE_DEPRECATED_CODE=1)
 add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
