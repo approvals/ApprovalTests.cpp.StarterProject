@@ -67,7 +67,7 @@ jobs:
     name: ${{ matrix.job-name }}
     steps:
     - uses: actions/checkout@v4
-    - uses: seanmiddleditch/gha-setup-ninja@v4
+    - uses: seanmiddleditch/gha-setup-ninja@v5
       if: contains(matrix.generator, 'Ninja')
 
     - name: configure
