@@ -13,7 +13,7 @@ jobs:
   build_visual_studio_sln:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: create project
         run: |
