@@ -1,8 +1,8 @@
 # ApprovalTests.cpp.StarterProject
 
 
-[![build](../../actions/workflows/build-and-test-via-cmake.yml/badge.svg)](../../actions/workflows/build-and-test-via-cmake.yml)
-[![build_vs](../../actions/workflows/build-and-test-visual-studio-solutions.yml/badge.svg)](../../actions/workflows/build-and-test-visual-studio-solutions.yml)
+[![Build and Test with CMake](../../actions/workflows/build-and-test-via-cmake.yml/badge.svg)](../../actions/workflows/build-and-test-via-cmake.yml)
+[![Build and Test Visual Studio Solution](../../actions/workflows/build-and-test-visual-studio-solutions.yml/badge.svg)](../../actions/workflows/build-and-test-visual-studio-solutions.yml)
 
 
 This is a starter project for:

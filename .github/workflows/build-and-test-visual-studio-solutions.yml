@@ -1,4 +1,4 @@
-name: build_vs
+name: Build and Test Visual Studio Solution
 
 on:
   push:
