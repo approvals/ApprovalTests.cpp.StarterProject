@@ -11,6 +11,7 @@ on:
 
 jobs:
   build_visual_studio_sln:
+    name: Build and Test Visual Studio Solution
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7

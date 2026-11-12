@@ -9,6 +9,7 @@ on:
 
 jobs:
   clang-format:
+    name: Check Formatting with clang-format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
