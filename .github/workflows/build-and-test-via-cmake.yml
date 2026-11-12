@@ -11,8 +11,8 @@ jobs:
   clang-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: DoozyX/clang-format-lint-action@v0.17
+      - uses: actions/checkout@v7
+      - uses: DoozyX/clang-format-lint-action@v0.20
         with:
           source: '.'
           exclude: './lib'
@@ -39,7 +39,7 @@ jobs:
           generator: '"Unix Makefiles"'
           relative_build_dir_path: ''
 
-        - job-name: ubuntu-18.04-latest
+        - job-name: ubuntu-latest-ninja
           os: ubuntu-latest
           generator: '"Ninja"'
           relative_build_dir_path: '../'
@@ -66,8 +66,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.job-name }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: seanmiddleditch/gha-setup-ninja@v4
+    - uses: actions/checkout@v7
+    - uses: seanmiddleditch/gha-setup-ninja@v6
       if: contains(matrix.generator, 'Ninja')
 
     - name: configure
