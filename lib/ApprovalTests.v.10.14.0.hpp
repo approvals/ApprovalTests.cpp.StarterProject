@@ -1,7 +1,7 @@
-// ApprovalTests.cpp version v.10.13.0
+// ApprovalTests.cpp version v.10.14.0
 // More information at: https://github.com/approvals/ApprovalTests.cpp
 //
-// Copyright (c) 2024 Llewellyn Falco and Clare Macrae. All rights reserved.
+// Copyright (c) 2026 Llewellyn Falco and Clare Macrae. All rights reserved.
 //
 // Distributed under the Apache 2.0 License
 // See https://opensource.org/licenses/Apache-2.0
@@ -26,9 +26,9 @@
 // ******************** From: ApprovalTestsVersion.h
 
 #define APPROVAL_TESTS_VERSION_MAJOR 10
-#define APPROVAL_TESTS_VERSION_MINOR 13
+#define APPROVAL_TESTS_VERSION_MINOR 14
 #define APPROVAL_TESTS_VERSION_PATCH 0
-#define APPROVAL_TESTS_VERSION_STR "10.13.0"
+#define APPROVAL_TESTS_VERSION_STR "10.14.0"
 
 #define APPROVAL_TESTS_VERSION                                                           \
     (APPROVAL_TESTS_VERSION_MAJOR * 10000 + APPROVAL_TESTS_VERSION_MINOR * 100 +         \
@@ -737,7 +737,6 @@ namespace ApprovalTests
 
     class ApprovalTestNamer : public ApprovalNamer
     {
-    private:
     public:
         ApprovalTestNamer() = default;
 
@@ -992,6 +991,7 @@ namespace ApprovalTests
 
         using TestPassedNotification = std::function<void()>;
         static void setTestPassedNotification(TestPassedNotification notification);
+        static void resetTestPassedNotification();
         static void notifyTestPassed();
 
     private:
@@ -1001,6 +1001,9 @@ namespace ApprovalTests
 
 // ******************** From: FmtToString.h
 #ifdef FMT_VERSION
+
+#include <fmt/format.h> // for fmt::to_string()
+
 namespace ApprovalTests
 {
     class FmtToString
@@ -1008,7 +1011,6 @@ namespace ApprovalTests
     public:
         template <typename T> static std::string toString(const T& printable)
         {
-            (void)printable;
             return fmt::to_string(printable);
         }
     };
@@ -2174,6 +2176,8 @@ namespace ApprovalTests
         static void
         setTestPassedNotification(FileApprover::TestPassedNotification notification);
 
+        static void resetTestPassedNotification();
+
         static void setCurrentTest(ApprovalTests::TestName* currentTest);
     };
 }
@@ -2267,7 +2271,10 @@ struct Catch2ApprovalListener : Catch::TestEventListenerBase
 
     virtual void sectionEnded(Catch::SectionStats const& /*sectionStats*/) override
     {
-        currentTest.sections.pop_back();
+        if (!currentTest.sections.empty())
+        {
+            currentTest.sections.pop_back();
+        }
     }
 };
 //}
@@ -2304,13 +2311,18 @@ CATCH_REGISTER_LISTENER(Catch2TestCommitRevert)
 // ******************** From: Catch2v3Approvals.h
 
 
-#ifdef APPROVALS_CATCH2_V3
+
+#if defined(APPROVALS_CATCH2_V3) || defined(APPROVALS_CATCH2_V3_AMALGAMATED)
 #define APPROVAL_TESTS_INCLUDE_CPPS
 
+#ifdef APPROVALS_CATCH2_V3_AMALGAMATED
+#include <catch_amalgamated.hpp>
+#else
 #include <catch2/reporters/catch_reporter_event_listener.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>
 #include <catch2/catch_test_case_info.hpp>
+#endif
 
 //namespace ApprovalTests {
 struct Catch2ApprovalListener : Catch::EventListenerBase
@@ -2442,15 +2454,23 @@ int main(int argc, char** argv)
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #endif
 
-#ifdef APPROVALS_DOCTEST
+// External-main mode uses doctest's implementation from another binary.
+// Define the implementation macro in exactly one source file per test library.
+#if defined(APPROVALS_DOCTEST) || defined(APPROVALS_DOCTEST_EXTERNAL_MAIN)
+
+#if !defined(APPROVALS_DOCTEST_EXTERNAL_MAIN) ||                                         \
+    defined(APPROVALS_DOCTEST_EXTERNAL_MAIN_IMPLEMENTATION)
 #define APPROVAL_TESTS_INCLUDE_CPPS
+#define APPROVALS_DOCTEST_REGISTER_LISTENER
+#endif
 
 #include <doctest/doctest.h>
 
+#if defined(APPROVALS_DOCTEST_REGISTER_LISTENER)
 namespace ApprovalTests
 {
     // anonymous namespace to prevent compiler -Wsubobject-linkage warnings
-    // This is OK as this code is only compiled on main()
+    // Compiled once per binary, in its ApprovalTests integration source file.
     namespace
     {
         struct AbstractReporter : doctest::IReporter
@@ -2547,6 +2567,8 @@ namespace ApprovalTests
 
             void test_case_end(const doctest::CurrentTestCaseStats& /*in*/) override
             {
+                // The notification may live in a library that is unloaded before exit.
+                ApprovalTests::FrameworkIntegrations::resetTestPassedNotification();
 
                 while (!currentTest.sections.empty())
                 {
@@ -2568,9 +2590,17 @@ namespace ApprovalTests
     }
 }
 
-REGISTER_LISTENER("approvals", 0, ApprovalTests::DocTestApprovalListener);
+#ifndef APPROVALS_DOCTEST_LISTENER_NAME
+#define APPROVALS_DOCTEST_LISTENER_NAME "approvals"
+#endif
 
-#endif // APPROVALS_DOCTEST
+REGISTER_LISTENER(APPROVALS_DOCTEST_LISTENER_NAME,
+                  0,
+                  ApprovalTests::DocTestApprovalListener);
+
+#endif // APPROVALS_DOCTEST_REGISTER_LISTENER
+
+#endif // APPROVALS_DOCTEST || APPROVALS_DOCTEST_EXTERNAL_MAIN
 
 // ******************** From: FmtApprovals.h
 #ifdef FMT_VERSION
@@ -2695,6 +2725,8 @@ namespace ApprovalTests
             TestName currentTest;
 
         public:
+            using boost::ut::reporter<boost::ut::printer>::on;
+
             auto on(boost::ut::events::test_begin test_begin) -> void
             {
                 std::string name = std::string(test_begin.name);
@@ -3627,6 +3659,23 @@ namespace ApprovalTests
 
 // ******************** From: FileApprover.cpp
 
+// ******************** From: ApprovalFileLog.hpp
+
+auto constexpr APPROVAL_TEMP_DIRECTORY = "./.approval_tests_temp";
+
+class ApprovalFileLog
+{
+public:
+    // Static initializer to ensure an _empty_ log file is created
+    static void initialize();
+
+    // Function to get the log file path
+    static std::string getLogFilePath();
+
+    // Function to log the approved file path
+    static void log(const std::string& filePath);
+};
+
 #include <sstream>
 
 namespace ApprovalTests
@@ -3686,8 +3735,10 @@ namespace ApprovalTests
                               const ApprovalWriter& s,
                               const Reporter& r)
     {
-        std::string approvedPath = n.getApprovedFile(s.getFileExtensionWithDot());
-        std::string receivedPath = n.getReceivedFile(s.getFileExtensionWithDot());
+        std::string const approvedPath = n.getApprovedFile(s.getFileExtensionWithDot());
+        std::string const receivedPath = n.getReceivedFile(s.getFileExtensionWithDot());
+
+        ApprovalFileLog::log(approvedPath);
         SystemUtils::ensureParentDirectoryExists(approvedPath);
         SystemUtils::ensureParentDirectoryExists(receivedPath);
         s.write(receivedPath);
@@ -3699,6 +3750,7 @@ namespace ApprovalTests
         }
         catch (const ApprovalException&)
         {
+            // FailedFileLog::log(receivedPath, approvedPath);
             reportAfterTryingFrontLoadedReporter(receivedPath, approvedPath, r);
             throw;
         }
@@ -3720,6 +3772,11 @@ namespace ApprovalTests
         FileApprover::TestPassedNotification notification)
     {
         testPassedNotification_ = notification;
+    }
+
+    void FileApprover::resetTestPassedNotification()
+    {
+        testPassedNotification_ = []() {};
     }
 
     void FileApprover::notifyTestPassed()
@@ -3852,6 +3909,11 @@ namespace ApprovalTests
         FileApprover::TestPassedNotification notification)
     {
         FileApprover::setTestPassedNotification(notification);
+    }
+
+    void FrameworkIntegrations::resetTestPassedNotification()
+    {
+        FileApprover::resetTestPassedNotification();
     }
 
     void FrameworkIntegrations::setCurrentTest(ApprovalTests::TestName* currentTest)
@@ -3990,6 +4052,38 @@ namespace ApprovalTests
 
         return launch;
     }
+}
+
+// ******************** From: ApprovalFileLog.cpp
+#include <fstream>
+
+void ApprovalFileLog::initialize()
+{
+    static bool isInitialized{false};
+    if (isInitialized)
+    {
+        return;
+    }
+    isInitialized = true;
+    ApprovalTests::FileUtils::writeToFile(getLogFilePath(), "");
+}
+
+std::string ApprovalFileLog::getLogFilePath()
+{
+    //auto const rootDirectory = ApprovalTests::TestName::getRootDirectory();
+    auto const rootDirectory = "";
+    // Note: Need to figure out where the actual root directory is.
+    std::string const filePath =
+        rootDirectory + std::string(APPROVAL_TEMP_DIRECTORY) + "/.approved_files.log";
+    ApprovalTests::SystemUtils::ensureDirectoryExists(APPROVAL_TEMP_DIRECTORY);
+    return filePath;
+}
+
+void ApprovalFileLog::log(const std::string& filePath)
+{
+    initialize();
+    std::ofstream ofs(getLogFilePath(), std::ios::app);
+    ofs << filePath << std::endl;
 }
 
 // ******************** From: ApprovalTestNamer.cpp
